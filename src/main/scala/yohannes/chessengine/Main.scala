@@ -1,6 +1,6 @@
 package yohannes.chessengine
 
-import cats.effect.{IO, IOApp}
+import cats.effect.{IOApp}
 
 object Main extends IOApp.Simple:
   // val run = ChessengineServer.run[IO]
