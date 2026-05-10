@@ -1,4 +1,4 @@
 package chessengine.domain
 
 enum Color:
-  case WHITE, BLACK
+  case White, Black
