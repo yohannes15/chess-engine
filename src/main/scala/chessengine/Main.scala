@@ -1,7 +1,8 @@
 package chessengine
 
 import cats.effect.{IOApp}
+import cats.effect.IO
 
 object Main extends IOApp.Simple:
   // val run = ChessengineServer.run[IO]
-  val run = ???
+  def run: IO[Unit] = ???
