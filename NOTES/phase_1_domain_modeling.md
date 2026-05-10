@@ -30,6 +30,8 @@ The objective of this phase is to establish the core types and structures that w
 
 ### Coordinate Systems vs. Content
 - **Square**: The "address" or location on the board (Opaque Int).
+    - **Decision**: Use the **0 = a1, 63 = h8** mapping (standard in `scalachess`).
+    - **Reasoning**: Ranks and files increase linearly with the index, making coordinate math (like `index / 8` for rank and `index % 8` for file) very intuitive.
 - **Piece**: The "content" at a specific Square (Color + Role).
 - **Board**: The container that maps Squares to Pieces (Vector).
     - **Decision**: Use a **Smart Constructor** (private constructor + factory methods) for `Board`.
@@ -54,3 +56,10 @@ Scala 3 `enum` is perfect for defining a fixed set of possibilities.
 Opaque types allow you to hide the implementation details of a type while keeping the performance of the underlying type.
 - **Benefit**: No wrapping/unwrapping overhead at runtime.
 - **Validation**: Enforce constraints (like 0-63) in the factory methods.
+
+### Chess Terminology: Ranks and Files
+- **File**: A vertical column on the board (labeled **a-h**).
+    - Calculation: `index % 8` (The remainder: "How far into the current row?")
+- **Rank**: A horizontal row on the board (labeled **1-8**).
+    - Calculation: `index / 8` (The quotient: "How many full rows have I passed?")
+- **Example**: Square `a1` is File 0, Rank 0 (Index 0). Square `h8` is File 7, Rank 7 (Index 63).
