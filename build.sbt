@@ -6,7 +6,7 @@ val MunitCatsEffectVersion = "2.1.0"
 
 lazy val root = (project in file("."))
   .settings(
-    organization := "yohannes",
+    organization := "chessengine",
     name := "chessengine",
     version := "0.0.1",
     scalaVersion := "3.8.2",

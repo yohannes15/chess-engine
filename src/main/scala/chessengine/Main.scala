@@ -1,4 +1,4 @@
-package yohannes.chessengine
+package chessengine
 
 import cats.effect.{IOApp}
 
