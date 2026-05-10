@@ -19,7 +19,7 @@ services:
       - ${HOME}/.gitconfig:/home/sbtuser/.gitconfig:ro
       - ${HOME}/.ssh:/home/sbtuser/.ssh:ro
     ports:
-      - "8080:8080"
+      - "8085:8085"
 
 volumes:
   sbt-sbt:
