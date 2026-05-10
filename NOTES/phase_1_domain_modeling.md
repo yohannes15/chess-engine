@@ -32,6 +32,8 @@ The objective of this phase is to establish the core types and structures that w
 - **Square**: The "address" or location on the board (Opaque Int).
 - **Piece**: The "content" at a specific Square (Color + Role).
 - **Board**: The container that maps Squares to Pieces (Vector).
+    - **Decision**: Use a **Smart Constructor** (private constructor + factory methods) for `Board`.
+    - **Reasoning**: Ensures that a `Board` can only be created with exactly 64 squares, preventing invalid states.
 
 ### File Organization (Standard Practice)
 - `Color.scala`, `Role.scala`, `Piece.scala`: Core building blocks.
