@@ -2,6 +2,12 @@ package chessengine.logic
 import chessengine.domain.*
 
 object MoveGenerator:
+  def legalMovesFromSquare(state: GameState, from: Square): List[Move] =
+    pseudoLegalMovesFromSquare(
+      state.board,
+      from
+    ).filter(move => isLegal(state, move))
+
   def pseudoLegalMovesFromSquare(board: Board, from: Square): List[Move] =
     board.pieces(from.index) match
       case None        => List.empty[Move]
