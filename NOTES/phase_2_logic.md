@@ -31,6 +31,9 @@ The objective of this phase is to implement the rules of chess: how pieces move,
     - Diagonals: `+7, +9, -7, -9`
 
 - **Edge Detection**: How do we know if a move like `+1` from `h4` (index 31) has wrapped around to `a5` (index 32)?
+    - **Decision**: Check the `file` and `rank` of the destination square.
+    - **Reasoning**: If a piece moves "East" (+1), the new `file` must be exactly `oldFile + 1`. If it's `0`, we've wrapped. Similarly for ranks.
+    - Edge detection can be done by checking that curr + move doesn't lap the modulo. 
 
 ## Study Guide: Key Concepts
 

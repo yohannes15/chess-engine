@@ -1,9 +1,46 @@
 package chessengine.domain
 
 enum Role:
-  case Pawn
-  case Rook
-  case Knight
-  case Bishop
-  case Queen
-  case King
+  case Pawn, Rook, Knight, Bishop, Queen, King
+
+  def moveOffsets: List[(Int, Int)] = this match
+    case Rook   => rookOffsets
+    case Knight => knightOffsets
+    case Bishop => bishopOffsets
+    case Queen  => queenOffsets
+    case King   => kingOffsets
+    case _      => List.empty
+
+  private val rookOffsets = List(
+    (0, 1), // North
+    (0, -1), // South
+    (1, 0), // East
+    (-1, 0) // West
+  )
+  private val bishopOffsets = List(
+    (1, 1), // NE
+    (1, -1), // SE
+    (-1, 1), // NW
+    (-1, -1) // SW
+  )
+  private lazy val queenOffsets = rookOffsets ++ bishopOffsets
+  private val knightOffsets = List(
+    (1, 2), // NE
+    (1, -2), // SE
+    (-1, 2), // NW
+    (-1, -2), // SW
+    (2, 1), // NE
+    (2, -1), // SE
+    (-2, 1), // NW
+    (-2, -1) // SW
+  )
+  private val kingOffsets = List(
+    (0, 1), // N
+    (0, -1), // S
+    (1, 0), // E
+    (-1, 0), // W
+    (1, 1), // NE
+    (1, -1), // SE
+    (-1, 1), // NW
+    (-1, -1) // SW
+  )
