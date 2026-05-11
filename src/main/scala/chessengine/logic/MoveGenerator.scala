@@ -164,8 +164,15 @@ object MoveGenerator:
       case _ => false
     }
 
-  /** A move is legal if, after making the move, your own King is not attacked
-    * by the Opponent
+  /** A move is legal if,
+    *   - after making the move, your own King is not attacked by the Opponent
+    * A castling move is legal if
+    *   - king hasn't moved at all
+    *   - one of the two rooks haven't moved
+    *   - empty space b/n king and one of the two rooks
+    *   - currently not in check
+    *   - moving spots not in check
+    *   - ending spots not in check
     */
   def isLegal(state: GameState, move: Move): Boolean =
     val currColor = move.piece.color

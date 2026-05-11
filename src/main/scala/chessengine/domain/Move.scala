@@ -27,9 +27,12 @@ case class PromotionMove(
     capture: Option[Piece]
 ) extends Move
 
-/*case class CastlingMove(
-    kingFrom: Square,
-    kingTo: Square,
+case class CastlingMove(
+    from: Square,
+    to: Square,
     rookFrom: Square,
-    rookTo: Square
-) extends Move */
+    rookTo: Square,
+    piece: Piece,
+    rookPiece: Piece,
+    capture: Option[Piece] = None
+) extends Move
