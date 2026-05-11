@@ -156,4 +156,16 @@ object MoveGenerator:
   /** A move is legal if, after making the move, your own King is not attacked
     * by the Opponent
     */
-  def isLegal(board: Board, move: Move): Boolean = ???
+  def isLegal(state: GameState, move: Move): Boolean =
+    val currColor = move.piece.color
+    val kingSquareAfterMove: Square = move.piece.role match
+      case Role.King => move.to
+      case _         =>
+        state.board.pieces.zipWithIndex.collectFirst {
+          case (Some(Piece(color, Role.King)), idx) if color == currColor =>
+            Square.fromInt(idx).get
+        }.get // safe because every valid board must have a king
+
+    val newState = state.applyMove(move)
+
+    !isSquareAttacked(newState.board, kingSquareAfterMove, currColor.opposite)

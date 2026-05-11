@@ -10,6 +10,7 @@ sealed trait Move:
   def from: Square
   def to: Square
   def piece: Piece // moving piece
+  def capture: Option[Piece]
 
 case class NormalMove(
     from: Square,

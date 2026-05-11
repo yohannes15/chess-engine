@@ -1,8 +1,8 @@
 package chessengine.domain
 
 final case class Board private (pieces: Vector[Option[Piece]]):
-  def update(s: Square, p: Piece): Board =
-    Board(pieces.updated(s.index, Some(p)))
+  def update(s: Square, p: Option[Piece]): Board =
+    Board(pieces.updated(s.index, p))
 
   def isEmptyAt(s: Square): Boolean =
     pieces(s.index) match
@@ -57,5 +57,5 @@ object Board:
 
   def initial: Board =
     startingPositions.foldLeft(Board.empty)({
-      case (board, (sq, piece)) => board.update(sq, piece)
+      case (board, (sq, piece)) => board.update(sq, Some(piece))
     })
