@@ -132,3 +132,28 @@ object MoveGenerator:
         List(move)
     }
     allMoves
+
+  /** To know if a square is attacked by a color C. There are 2 ways
+    *   - A) Generate all pseudo-legal moves for every `C` color piece and see
+    *     if any of them land on the square.
+    *   - B) TODO: Look outward from square.
+    *     - If you look N, and see a C color Rook/Queen, its attacked.
+    *     - If you look like a Knight and see a C color knight, its attacked.
+    */
+  def isSquareAttacked(
+      board: Board,
+      square: Square,
+      attackerColor: Color
+  ): Boolean =
+    // Method A
+    board.pieces.zipWithIndex.exists {
+      case (Some(piece), idx) if piece.color == attackerColor =>
+        pseudoLegalMovesFromSquare(board, Square.fromInt(idx).get)
+          .exists(_.to.index == square.index)
+      case _ => false
+    }
+
+  /** A move is legal if, after making the move, your own King is not attacked
+    * by the Opponent
+    */
+  def isLegal(board: Board, move: Move): Boolean = ???
