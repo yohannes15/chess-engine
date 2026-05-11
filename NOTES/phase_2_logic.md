@@ -24,15 +24,23 @@ The objective of this phase is to implement the rules of chess: how pieces move,
 ## Architectural Decisions
 
 - **Direction Logic**: How do we represent "steps" on a 1D board?
-    - North: `+8`
-    - South: `-8`
-    - East: `+1`
-    - West: `-1`
-    - Diagonals: `+7, +9, -7, -9`
+    - **Decision**: Use `(dr, df)` tuples stored in the `Role` enum.
+    - **Implementation**: 
+        - `generateSliding`: Uses recursion to "walk" in a direction until blocked.
+        - `generateLeaping`: Uses a single check for fixed offsets (Knight/King).
 
 - **Edge Detection**: How do we know if a move like `+1` from `h4` (index 31) has wrapped around to `a5` (index 32)?
-    - **Decision**: Check the `file` and `rank` of the destination square.
-    - **Reasoning**: If a piece moves "East" (+1), the new `file` must be exactly `oldFile + 1`. If it's `0`, we've wrapped. Similarly for ranks.
+    - **Decision**: Use `Square.fromRankAndFile(newRank, newFile)`. If it returns `None`, the move is invalid.
+
+## Progress Tracking
+
+- [x] Color, Role, Piece, Square, Board (Domain)
+- [x] Move Sum Type (Normal, Promotion)
+- [x] Move Generation: Sliding Pieces (Rook, Bishop, Queen)
+- [x] Move Generation: Leaping Pieces (Knight, King)
+- [ ] Move Generation: Pawns (In Progress)
+- [ ] Move Generation: Special Moves (Castling, En Passant)
+- [ ] Legal Move Filtering (Check detection)
     - Edge detection can be done by checking that curr + move doesn't lap the modulo. 
 
 ## Study Guide: Key Concepts
