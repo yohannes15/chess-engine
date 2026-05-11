@@ -3,6 +3,14 @@ package chessengine.domain
 enum Role:
   case Pawn, Rook, Knight, Bishop, Queen, King
 
+  def isSliding: Boolean = this match
+    case Rook | Bishop | Queen => true
+    case _                     => false
+
+  def isLeaping: Boolean = this match
+    case Knight | King => true
+    case _             => false
+
   def moveOffsets: List[(Int, Int)] = this match
     case Rook   => rookOffsets
     case Knight => knightOffsets

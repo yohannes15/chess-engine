@@ -4,6 +4,11 @@ final case class Board private (pieces: Vector[Option[Piece]]):
   def update(s: Square, p: Piece): Board =
     Board(pieces.updated(s.index, Some(p)))
 
+  def isEmptyAt(s: Square): Boolean =
+    pieces(s.index) match
+      case Some(piece) => false
+      case None        => true
+
 object Board:
   import Color.*
   import Role.*

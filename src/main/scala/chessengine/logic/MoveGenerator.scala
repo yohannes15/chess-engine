@@ -76,4 +76,59 @@ object MoveGenerator:
       board: Board,
       from: Square,
       piece: Piece
-  ): List[Move] = ???
+  ): List[Move] =
+    val (currRank, currFile) = (from.rank, from.file)
+
+    val isStartingRank = piece.color match
+      case Color.White => currRank == 1
+      case Color.Black => currRank == 6
+
+    val forward = piece.color match
+      case Color.White => 1
+      case Color.Black => -1
+
+    // Forward 1 Move
+    val forwardOne =
+      Square.fromRankAndFile(currRank + forward, currFile).flatMap {
+        sq =>
+          if board.pieces(sq.index).isEmpty then
+            Some(NormalMove(from, sq, piece, None))
+          else
+            None
+      }
+    // Forward 2 Move -> Only check if forwarDone was successful
+    val forwardTwo = if isStartingRank && forwardOne.isDefined then
+      Square.fromRankAndFile(currRank + 2 * forward, currFile).flatMap {
+        sq =>
+          if board.pieces(sq.index).isEmpty then
+            Some(NormalMove(from, sq, piece, None))
+          else None
+      }
+    else None
+    // Captures
+    val captures = List(currFile - 1, currFile + 1).flatMap { f =>
+      Square.fromRankAndFile(currRank + forward, f).flatMap { sq =>
+        board.pieces(sq.index) match
+          case Some(target) if target.color != piece.color =>
+            Some(NormalMove(from, sq, piece, Some(target)))
+          case _ => None
+      }
+    }
+    val potentialMoves: List[NormalMove] = (
+      forwardOne.toList ++ forwardTwo.toList ++ captures.toList
+    )
+    // Check if potential moves are promotion
+    // "For each move, if it's a promotion, give me 4 moves. otherwise, give me 1."
+    val allMoves = potentialMoves.flatMap { move =>
+      val isPromotion: Boolean =
+        (piece.color == Color.White && move.to.rank == 7) ||
+          (piece.color == Color.Black && move.to.rank == 0)
+
+      if isPromotion then
+        List(Role.Queen, Role.Rook, Role.Bishop, Role.Knight).map(role =>
+          PromotionMove(move.from, move.to, move.piece, role, move.capture)
+        )
+      else
+        List(move)
+    }
+    allMoves

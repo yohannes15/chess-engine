@@ -38,7 +38,7 @@ The objective of this phase is to implement the rules of chess: how pieces move,
 - [x] Move Sum Type (Normal, Promotion)
 - [x] Move Generation: Sliding Pieces (Rook, Bishop, Queen)
 - [x] Move Generation: Leaping Pieces (Knight, King)
-- [ ] Move Generation: Pawns (In Progress)
+- [x] Move Generation: Pawns (Standard, Double, Capture, Promotion)
 - [ ] Move Generation: Special Moves (Castling, En Passant)
 - [ ] Legal Move Filtering (Check detection)
     - Edge detection can be done by checking that curr + move doesn't lap the modulo. 
