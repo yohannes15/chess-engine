@@ -4,7 +4,7 @@ import chessengine.domain.*
 object MoveGenerator:
   def legalMovesFromSquare(state: GameState, from: Square): List[Move] =
     pseudoLegalMovesFromSquare(
-      state.board,
+      state,
       from
     ).filter(move => isLegal(state, move))
 
@@ -13,30 +13,38 @@ object MoveGenerator:
     * attacking your King. If your king can be captured, you're in check!
     * period.
     */
-  def pseudoLegalMovesFromSquare(board: Board, from: Square): List[Move] =
-    board.pieces(from.index) match
+  def pseudoLegalMovesFromSquare(state: GameState, from: Square): List[Move] =
+    state.board.pieces(from.index) match
       case None        => List.empty[Move]
       case Some(piece) =>
-        generateForPiece(board, from, piece)
+        generateForPiece(state, from, piece)
 
   def generateForPiece(
-      board: Board,
+      state: GameState,
       from: Square,
       piece: Piece
   ): List[Move] = piece.role match
     case r @ (Role.Rook | Role.Bishop | Role.Queen) =>
       r.moveOffsets.flatMap(dir =>
-        generateSliding(board, from, piece, dir)
+        generateSliding(state, from, piece, dir)
       )
-    case r @ (Role.Knight | Role.King) =>
+    case r @ (Role.Knight) =>
       r.moveOffsets.flatMap(offset =>
-        generateLeaping(board, from, piece, offset)
+        generateLeaping(state, from, piece, offset)
+      )
+    case r @ (Role.King) =>
+      r.moveOffsets.flatMap(offset =>
+        generateLeaping(state, from, piece, offset)
+      ) ++ generateCastlingMoves(
+        state,
+        from,
+        piece
       )
     case Role.Pawn =>
-      generatePawnMoves(board, from, piece)
+      generatePawnMoves(state, from, piece)
 
   def generateSliding(
-      board: Board,
+      state: GameState,
       from: Square,
       piece: Piece,
       dir: (Int, Int)
@@ -48,7 +56,7 @@ object MoveGenerator:
       Square.fromRankAndFile(nextRank, nextFile) match
         case None         => Nil // Edge of board
         case Some(nextSq) =>
-          board.pieces(nextSq.index) match
+          state.board.pieces(nextSq.index) match
             case None =>
               // Empty! Add move and Keep Walking
               NormalMove(from, nextSq, piece, None) :: walk(nextRank, nextFile)
@@ -61,7 +69,7 @@ object MoveGenerator:
     walk(from.rank, from.file)
 
   def generateLeaping(
-      board: Board,
+      state: GameState,
       from: Square,
       piece: Piece,
       offset: (Int, Int)
@@ -70,7 +78,7 @@ object MoveGenerator:
     val nextFile = from.file + offset(1)
     Square.fromRankAndFile(nextRank, nextFile) match
       case Some(nextSq) =>
-        board.pieces(nextSq.index) match
+        state.board.pieces(nextSq.index) match
           case Some(target) if target.color != piece.color =>
             // Opponent! CAPTURE
             List(NormalMove(from, nextSq, piece, Some(target)))
@@ -84,7 +92,7 @@ object MoveGenerator:
       case None => Nil // Edge of board
 
   def generatePawnMoves(
-      board: Board,
+      state: GameState,
       from: Square,
       piece: Piece
   ): List[Move] =
@@ -102,7 +110,7 @@ object MoveGenerator:
     val forwardOne =
       Square.fromRankAndFile(currRank + forward, currFile).flatMap {
         sq =>
-          if board.pieces(sq.index).isEmpty then
+          if state.board.pieces(sq.index).isEmpty then
             Some(NormalMove(from, sq, piece, None))
           else
             None
@@ -111,7 +119,7 @@ object MoveGenerator:
     val forwardTwo = if isStartingRank && forwardOne.isDefined then
       Square.fromRankAndFile(currRank + 2 * forward, currFile).flatMap {
         sq =>
-          if board.pieces(sq.index).isEmpty then
+          if state.board.pieces(sq.index).isEmpty then
             Some(NormalMove(from, sq, piece, None))
           else None
       }
@@ -119,7 +127,7 @@ object MoveGenerator:
     // Captures
     val captures = List(currFile - 1, currFile + 1).flatMap { f =>
       Square.fromRankAndFile(currRank + forward, f).flatMap { sq =>
-        board.pieces(sq.index) match
+        state.board.pieces(sq.index) match
           case Some(target) if target.color != piece.color =>
             Some(NormalMove(from, sq, piece, Some(target)))
           case _ => None
@@ -144,6 +152,13 @@ object MoveGenerator:
     }
     allMoves
 
+  def generateCastlingMoves(
+      state: GameState,
+      from: Square,
+      piece: Piece
+  ): List[Move] =
+    ???
+
   /** To know if a square is attacked by a color C. There are 2 ways
     *   - A) Generate all pseudo-legal moves for every `C` color piece and see
     *     if any of them land on the square.
@@ -152,14 +167,14 @@ object MoveGenerator:
     *     - If you look like a Knight and see a C color knight, its attacked.
     */
   def isSquareAttacked(
-      board: Board,
+      state: GameState,
       square: Square,
       attackerColor: Color
   ): Boolean =
     // Method A
-    board.pieces.zipWithIndex.exists {
+    state.board.pieces.zipWithIndex.exists {
       case (Some(piece), idx) if piece.color == attackerColor =>
-        pseudoLegalMovesFromSquare(board, Square.fromInt(idx).get)
+        pseudoLegalMovesFromSquare(state, Square.fromInt(idx).get)
           .exists(_.to.index == square.index)
       case _ => false
     }
@@ -186,4 +201,4 @@ object MoveGenerator:
 
     val newState = state.applyMove(move)
 
-    !isSquareAttacked(newState.board, kingSquareAfterMove, currColor.opposite)
+    !isSquareAttacked(newState, kingSquareAfterMove, currColor.opposite)
