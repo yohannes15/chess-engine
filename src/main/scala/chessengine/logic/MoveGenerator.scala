@@ -8,6 +8,11 @@ object MoveGenerator:
       from
     ).filter(move => isLegal(state, move))
 
+  /** for attack detection primarily. You don't need to know if an opponent's
+    * move is legal (i.e. if it leaves their King in check) to know if they are
+    * attacking your King. If your king can be captured, you're in check!
+    * period.
+    */
   def pseudoLegalMovesFromSquare(board: Board, from: Square): List[Move] =
     board.pieces(from.index) match
       case None        => List.empty[Move]
