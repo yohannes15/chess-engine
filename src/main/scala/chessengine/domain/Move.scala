@@ -5,6 +5,7 @@ package chessengine.domain
   *   - Normal Move (regular move with potential capture)
   *   - Promotion Move (pawn move with potential capture and new role for pawn)
   *   - Castling move (king and castle move)
+  *   - EnPassant move (special rare scenario pawn move with odd capture)
   */
 sealed trait Move:
   def from: Square
