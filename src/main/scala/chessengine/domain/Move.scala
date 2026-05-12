@@ -35,3 +35,10 @@ case class CastlingMove(
     piece: Piece,
     capture: Option[Piece] = None
 ) extends Move
+
+case class EnPassantMove(
+    from: Square,
+    to: Square,
+    piece: Piece,
+    capture: Option[Piece]
+) extends Move

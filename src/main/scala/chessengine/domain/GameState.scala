@@ -19,8 +19,10 @@ final case class CastlingRights(
     val rightsAfterMove = move match
       case CastlingMove(_, _, _, _, piece, _) =>
         piece.color match
-          case Color.White => this.copy(whiteKingSide = false, whiteQueenSide = false)
-          case Color.Black => this.copy(blackKingSide = false, blackQueenSide = false)
+          case Color.White =>
+            this.copy(whiteKingSide = false, whiteQueenSide = false)
+          case Color.Black =>
+            this.copy(blackKingSide = false, blackQueenSide = false)
 
       case m: (NormalMove | PromotionMove) =>
         val withMovingPiece = m.piece match
@@ -46,15 +48,20 @@ final case class CastlingRights(
           case "h8" => withMovingPiece.copy(blackKingSide = false)
           case _    => withMovingPiece
 
+      case _ => this
+
     rightsAfterMove
 
 final case class GameState(
     board: Board,
     color: Color,
     captures: List[Piece] = Nil,
-    castlingRights: CastlingRights = CastlingRights()
+    castlingRights: CastlingRights = CastlingRights(),
+    // which square is "vulnerable" to En Passant.
+    enPassantSquare: Option[Square]
 ):
   def applyMove(move: Move): GameState =
+    val forward = if color == Color.White then 1 else -1
     val newCaptures = move.capture match
       case Some(p) => captures :+ p
       case None    => captures
@@ -63,17 +70,38 @@ final case class GameState(
       case m: NormalMove =>
         board.update(m.from, None).update(m.to, Some(m.piece))
       case m: PromotionMove =>
-        board.update(m.from, None).update(m.to, Some(Piece(m.piece.color, m.promotion)))
+        board.update(
+          m.from,
+          None
+        ).update(m.to, Some(Piece(m.piece.color, m.promotion)))
       case m: CastlingMove =>
         board
           .update(m.from, None)
           .update(m.to, Some(m.piece))
           .update(m.rookFrom, None)
           .update(m.rookTo, Some(Piece(m.piece.color, Role.Rook)))
+      case m: EnPassantMove =>
+        val capturedSquare = Square.fromRankAndFile(
+          m.to.rank - forward,
+          m.to.file
+        )
+        board
+          .update(m.from, None)
+          .update(m.to, Some(m.piece))
+          .update(capturedSquare.get, None)
+
+    val nextEnPassantSquare = move match
+      case m: NormalMove
+          if m.piece.role == Role.Pawn &&
+            Math.abs(m.from.rank - m.to.rank) == 2 =>
+        // Calculate the square between from and to
+        Square.fromRankAndFile((m.from.rank + m.to.rank) / 2, m.from.file)
+      case _ => None
 
     this.copy(
       board = newBoard,
       color = color.opposite,
       captures = newCaptures,
-      castlingRights = castlingRights.update(move)
+      castlingRights = castlingRights.update(move),
+      enPassantSquare = nextEnPassantSquare
     )

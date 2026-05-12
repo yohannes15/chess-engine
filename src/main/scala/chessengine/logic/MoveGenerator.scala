@@ -28,13 +28,16 @@ object MoveGenerator:
     case r @ (Role.Rook | Role.Bishop | Role.Queen) =>
       r.moveOffsets.flatMap(dir => generateSliding(state, from, piece, dir))
     case r @ Role.Knight =>
-      r.moveOffsets.flatMap(offset => generateLeaping(state, from, piece, offset))
+      r.moveOffsets.flatMap(offset =>
+        generateLeaping(state, from, piece, offset)
+      )
     case r @ Role.King =>
       r.moveOffsets.flatMap(offset =>
         generateLeaping(state, from, piece, offset)
       ) ++ generateCastlingMoves(state, from, piece)
     case Role.Pawn =>
-      generatePawnMoves(state, from, piece)
+      generatePawnMoves(state, from, piece) ++
+        generateEnPassantMoves(state, from, piece)
 
   def generateSliding(
       state: GameState,
@@ -47,7 +50,7 @@ object MoveGenerator:
       val nextRank = currRank + dr
       val nextFile = currFile + df
       Square.fromRankAndFile(nextRank, nextFile) match
-        case None => Nil // Edge of board
+        case None         => Nil // Edge of board
         case Some(nextSq) =>
           state.board.pieces(nextSq.index) match
             case None =>
@@ -102,14 +105,14 @@ object MoveGenerator:
     // Forward 1 Move
     val forwardOne =
       Square.fromRankAndFile(currRank + forward, currFile).flatMap { sq =>
-        if state.board.pieces(sq.index).isEmpty then
+        if state.board.isEmptyAt(sq) then
           Some(NormalMove(from, sq, piece, None))
         else None
       }
     // Forward 2 Move -> Only check if forwarDone was successful
     val forwardTwo = if isStartingRank && forwardOne.isDefined then
       Square.fromRankAndFile(currRank + 2 * forward, currFile).flatMap { sq =>
-        if state.board.pieces(sq.index).isEmpty then
+        if state.board.isEmptyAt(sq) then
           Some(NormalMove(from, sq, piece, None))
         else None
       }
@@ -141,7 +144,32 @@ object MoveGenerator:
     }
     allMoves
 
-  /** Generate castling moves for piece. The pre-conditions for Castling are:
+  /** Generate EnPassant moves if there is a vulnerable enPassantSquare and from
+    * pawn can reach EnPassant Square
+    */
+  def generateEnPassantMoves(
+      state: GameState,
+      from: Square,
+      piece: Piece
+  ): List[Move] =
+    state.enPassantSquare match
+      case None       => Nil // There is no enPassantSquare to take over
+      case Some(epSq) =>
+        val forward = if piece.color == Color.White then 1 else -1
+        val isDiagonal = epSq.rank == from.rank + forward &&
+          Math.abs(epSq.file - from.file) == 1
+        if isDiagonal then
+          // The piece being captured is actually BEHIND the epSq
+          val sqBehindEpSq = Square.fromRankAndFile(
+            from.rank,
+            epSq.file
+          ).get
+          val capturedPawn = state.board.pieces(sqBehindEpSq.index)
+          List(EnPassantMove(from, epSq, piece, capturedPawn))
+        else
+          Nil
+
+  /** Generate Castling moves for piece. The pre-conditions are:
     *   - Role: Is the piece a King?
     *   - Color: Is it White or Black?
     *   - Square: Is the king on its starting square (e1White and e8Black)
@@ -166,7 +194,8 @@ object MoveGenerator:
         val destSq = Square.fromNotation(dest).get
         val rookFromSq = Square.fromNotation(rookFrom).get
         val rookToSq = Square.fromNotation(rookTo).get
-        val extraEmpty = extra.flatMap(Square.fromNotation).forall(state.board.isEmptyAt)
+        val extraEmpty =
+          extra.flatMap(Square.fromNotation).forall(state.board.isEmptyAt)
 
         if state.castlingRights.isAllowed(piece.color, side) &&
           canCastle(state, from, passSq, destSq, piece.color.opposite) &&
@@ -217,7 +246,7 @@ object MoveGenerator:
     val currColor = move.piece.color
     val kingSquareAfterMove: Square = move.piece.role match
       case Role.King => move.to
-      case _ =>
+      case _         =>
         state.board.pieces.zipWithIndex
           .collectFirst {
             case (Some(Piece(color, Role.King)), idx) if color == currColor =>
@@ -239,6 +268,8 @@ object MoveGenerator:
       attackerColor: Color
   ): Boolean =
     val path = List(kingSq, passSq, destSq)
-    val pathEmpty = state.board.isEmptyAt(passSq) && state.board.isEmptyAt(destSq)
-    val pathSafe = path.forall(sq => !isSquareAttacked(state, sq, attackerColor))
+    val pathEmpty = state.board.isEmptyAt(passSq) &&
+      state.board.isEmptyAt(destSq)
+    val pathSafe =
+      path.forall(sq => !isSquareAttacked(state, sq, attackerColor))
     pathEmpty && pathSafe
