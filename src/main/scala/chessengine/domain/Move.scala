@@ -33,6 +33,5 @@ case class CastlingMove(
     rookFrom: Square,
     rookTo: Square,
     piece: Piece,
-    rookPiece: Piece,
     capture: Option[Piece] = None
 ) extends Move

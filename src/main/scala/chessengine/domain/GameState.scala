@@ -8,7 +8,7 @@ final case class CastlingRights(
 ):
   def update(move: Move): CastlingRights =
     move match
-      case CastlingMove(_, _, _, _, piece, _, _) =>
+      case CastlingMove(_, _, _, _, piece, _) =>
         piece.color match
           case Color.White =>
             this.copy(whiteKingSide = false, whiteQueenSide = false)

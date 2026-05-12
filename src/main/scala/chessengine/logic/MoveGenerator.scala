@@ -152,12 +152,91 @@ object MoveGenerator:
     }
     allMoves
 
+  /** Generate castling moves for piece. The pre-conditions for Castling are:
+    *   - Role: Is the piece a King?
+    *   - Color: Is it White or Black?
+    *   - Square: Is the king on its starting square (e1White and e8Black)
+    *   - Rights: Does Gamestate say this color still has castling rights?
+    */
   def generateCastlingMoves(
       state: GameState,
       from: Square,
       piece: Piece
   ): List[Move] =
-    ???
+    (piece.role, piece.color, from.toNotation) match
+      case (Role.King, Color.White, "e1") =>
+        val kingSide =
+          if (
+              state.castlingRights.whiteKingSide &&
+              canCastle(state, "e1", "f1", "g1", piece.color.opposite)
+            )
+          then
+            Some(
+              CastlingMove(
+                from = from,
+                to = Square.fromNotation("g1").get,
+                rookFrom = Square.fromNotation("h1").get,
+                rookTo = Square.fromNotation("f1").get,
+                piece = piece
+              )
+            )
+          else None
+
+        val queenSide =
+          if (
+              state.castlingRights.whiteQueenSide &&
+              canCastle(state, "e1", "d1", "c1", piece.color.opposite) &&
+              state.board.isEmptyAt(Square.fromNotation("b1").get)
+            )
+          then
+            Some(
+              CastlingMove(
+                from = from,
+                to = Square.fromNotation("c1").get,
+                rookFrom = Square.fromNotation("a1").get,
+                rookTo = Square.fromNotation("d1").get,
+                piece = piece
+              )
+            )
+          else None
+        List(kingSide, queenSide).flatten
+      case (Role.King, Color.Black, "e8") =>
+        val kingSide =
+          if (
+              state.castlingRights.blackKingSide &&
+              canCastle(state, "e8", "f8", "g8", piece.color.opposite)
+            )
+          then
+            Some(
+              CastlingMove(
+                from = from,
+                to = Square.fromNotation("g8").get,
+                rookFrom = Square.fromNotation("h8").get,
+                rookTo = Square.fromNotation("f8").get,
+                piece = piece
+              )
+            )
+          else None
+
+        val queenSide =
+          if (
+              state.castlingRights.blackQueenSide &&
+              canCastle(state, "e8", "d8", "c8", piece.color.opposite) &&
+              state.board.isEmptyAt(Square.fromNotation("b8").get)
+            )
+          then
+            Some(
+              CastlingMove(
+                from = from,
+                to = Square.fromNotation("c8").get,
+                rookFrom = Square.fromNotation("a8").get,
+                rookTo = Square.fromNotation("d8").get,
+                piece = piece
+              )
+            )
+          else None
+        List(kingSide, queenSide).flatten
+      case _ => Nil // Not a King on its starting square
 
   /** To know if a square is attacked by a color C. There are 2 ways
     *   - A) Generate all pseudo-legal moves for every `C` color piece and see
@@ -202,3 +281,24 @@ object MoveGenerator:
     val newState = state.applyMove(move)
 
     !isSquareAttacked(newState, kingSquareAfterMove, currColor.opposite)
+
+  /** Given kingSq(starting), its passSq(passing square) and destSq(destination
+    * square) and attackerColor, return whether the King can perform a castle
+    */
+  def canCastle(
+      state: GameState,
+      kingSq: String,
+      passSq: String,
+      destSq: String,
+      attackerColor: Color
+  ): Boolean =
+    val squares = List(kingSq, passSq, destSq).flatMap(Square.fromNotation)
+
+    // Are all these squares empty (except the kingStart)
+    val pathEmpty = squares.takeRight(2).forall(state.board.isEmptyAt)
+
+    // Are all these squares safe from attack
+    val pathSafe =
+      squares.forall(sq => !isSquareAttacked(state, sq, attackerColor))
+
+    pathEmpty && pathSafe
