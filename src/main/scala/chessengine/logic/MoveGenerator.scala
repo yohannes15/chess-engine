@@ -3,6 +3,15 @@ package chessengine.logic
 import chessengine.domain.*
 
 object MoveGenerator:
+
+  /** Every legal move available for the current player */
+  def allLegalMoves(state: GameState): List[Move] =
+    state.board.pieces.zipWithIndex.flatMap {
+      case (Some(piece), idx) if piece.color == state.color =>
+        legalMovesFromSquare(state, Square.fromInt(idx).get)
+      case _ => Nil
+    }.toList
+
   def legalMovesFromSquare(state: GameState, from: Square): List[Move] =
     pseudoLegalMovesFromSquare(
       state,
@@ -273,3 +282,17 @@ object MoveGenerator:
     val pathSafe =
       path.forall(sq => !isSquareAttacked(state, sq, attackerColor))
     pathEmpty && pathSafe
+
+  def isCheckmate(state: GameState): Boolean =
+    allLegalMoves(state).isEmpty && isSquareAttacked(
+      state,
+      state.board.findPiece(state.color, Role.King).get,
+      state.color.opposite
+    )
+
+  def isStalemate(state: GameState): Boolean =
+    allLegalMoves(state).isEmpty && !isSquareAttacked(
+      state,
+      state.board.findPiece(state.color, Role.King).get,
+      state.color.opposite
+    )

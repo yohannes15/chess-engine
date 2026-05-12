@@ -9,6 +9,12 @@ final case class Board private (pieces: Vector[Option[Piece]]):
       case Some(piece) => false
       case None        => true
 
+  def findPiece(color: Color, role: Role): Option[Square] =
+    pieces.zipWithIndex.collectFirst({
+      case (Some(Piece(c, r)), idx) if c == color && r == role =>
+        Square.fromInt(idx).get
+    })
+
 object Board:
   import Color.*
   import Role.*
