@@ -8,7 +8,7 @@ object MoveGenerator:
   def allLegalMoves(state: GameState): List[Move] =
     state.board.pieces.zipWithIndex.flatMap {
       case (Some(piece), idx) if piece.color == state.color =>
-        legalMovesFromSquare(state, Square.fromInt(idx).get)
+        legalMovesFromSquare(state, Square(idx))
       case _ => Nil
     }.toList
 
@@ -236,32 +236,26 @@ object MoveGenerator:
   ): Boolean =
     state.board.pieces.zipWithIndex.exists {
       case (Some(piece), idx) if piece.color == attackerColor =>
-        pseudoLegalMovesFromSquare(state, Square.fromInt(idx).get)
+        pseudoLegalMovesFromSquare(state, Square(idx))
           .exists(_.to.index == square.index)
       case _ => false
     }
 
-  /** A move is legal if,
-    *   - after making the move, your own King is not attacked by the Opponent
-    * A castling move is legal if
-    *   - king hasn't moved at all
-    *   - one of the two rooks haven't moved
-    *   - empty space b/n king and one of the two rooks
-    *   - currently not in check
-    *   - moving spots not in check
-    *   - ending spots not in check
+  /** A move is legal if, after making the move, the moving player's King is
+    * not under attack (not in check).
+    *
+    * Note: Special moves like Castling have additional legality rules (e.g.,
+    * not moving through check) which are handled during move generation.
     */
   def isLegal(state: GameState, move: Move): Boolean =
     val currColor = move.piece.color
-    val kingSquareAfterMove: Square = move.piece.role match
-      case Role.King => move.to
-      case _         =>
-        state.board.pieces.zipWithIndex
-          .collectFirst {
-            case (Some(Piece(color, Role.King)), idx) if color == currColor =>
-              Square.fromInt(idx).get
-          }
-          .get // safe because every valid board must have a king
+    val kingSq = state.board.findPiece(currColor, Role.King)
+      .getOrElse(throw new IllegalStateException(
+        s"King missing for $currColor!"
+      ))
+
+    val kingSquareAfterMove: Square =
+      if move.piece.role == Role.King then move.to else kingSq
 
     val newState = state.applyMove(move)
     !isSquareAttacked(newState, kingSquareAfterMove, currColor.opposite)
@@ -284,15 +278,23 @@ object MoveGenerator:
     pathEmpty && pathSafe
 
   def isCheckmate(state: GameState): Boolean =
+    val kingSq = state.board.findPiece(state.color, Role.King)
+      .getOrElse(throw new IllegalStateException(
+        s"King missing for ${state.color}!"
+      ))
     allLegalMoves(state).isEmpty && isSquareAttacked(
       state,
-      state.board.findPiece(state.color, Role.King).get,
+      kingSq,
       state.color.opposite
     )
 
   def isStalemate(state: GameState): Boolean =
+    val kingSq = state.board.findPiece(state.color, Role.King)
+      .getOrElse(throw new IllegalStateException(
+        s"King missing for ${state.color}!"
+      ))
     allLegalMoves(state).isEmpty && !isSquareAttacked(
       state,
-      state.board.findPiece(state.color, Role.King).get,
+      kingSq,
       state.color.opposite
     )

@@ -5,15 +5,13 @@ final case class Board private (pieces: Vector[Option[Piece]]):
     Board(pieces.updated(s.index, p))
 
   def isEmptyAt(s: Square): Boolean =
-    pieces(s.index) match
-      case Some(piece) => false
-      case None        => true
+    pieces(s.index).isEmpty
 
   def findPiece(color: Color, role: Role): Option[Square] =
-    pieces.zipWithIndex.collectFirst({
+    pieces.zipWithIndex.collectFirst {
       case (Some(Piece(c, r)), idx) if c == color && r == role =>
-        Square.fromInt(idx).get
-    })
+        Square(idx)
+    }
 
 object Board:
   import Color.*
@@ -62,6 +60,6 @@ object Board:
   def empty: Board = Board(Vector.fill(64)(None))
 
   def initial: Board =
-    startingPositions.foldLeft(Board.empty)({
+    startingPositions.foldLeft(Board.empty) {
       case (board, (sq, piece)) => board.update(sq, Some(piece))
-    })
+    }
