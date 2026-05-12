@@ -27,6 +27,7 @@ extension (s: Square)
   def index: Int = s // underlying Int
   def rank: Int = s / 8
   def file: Int = s % 8
+  def flip: Int = s ^ 56 // vertical flipping -> (7 - rank)
   def toNotation: String =
     // 0 -> a1, 1 -> a2 ...
     val file = ('a' + s.file).toChar

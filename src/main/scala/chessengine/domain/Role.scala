@@ -3,6 +3,15 @@ package chessengine.domain
 enum Role:
   case Pawn, Rook, Knight, Bishop, Queen, King
 
+  def weight: Int =
+    this match
+      case Pawn   => 100
+      case Knight => 320
+      case Bishop => 330
+      case Rook   => 500
+      case Queen  => 900
+      case King   => 20000
+
   def isSliding: Boolean = this match
     case Rook | Bishop | Queen => true
     case _                     => false
