@@ -12,9 +12,9 @@ import chessengine.domain.*
   */
 object PST:
 
-  def bonus(role: Role, square: Square, color: Color): Int =
-    val idx = if color == Color.White then square.index else square.flip
-    role match
+  def bonus(piece: Piece, square: Square): Int =
+    val idx = if piece.color == Color.White then square.index else square.flip
+    piece.role match
       case Role.Pawn   => pawnTable(idx)
       case Role.Knight => knightTable(idx)
       case Role.Bishop => bishopTable(idx)

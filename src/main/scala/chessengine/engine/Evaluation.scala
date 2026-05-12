@@ -34,10 +34,7 @@ case class Evaluation(state: GameState):
   def totalBalance: Score =
     state.board.pieces.zipWithIndex.foldLeft(Score.zero) {
       case (acc, (Some(p), idx)) =>
-        val pieceScore = Score(
-          p.role.weight,
-          PST.bonus(p.role, Square(idx), p.color)
-        )
+        val pieceScore = Score(p.role.weight, PST.bonus(p, Square(idx)))
         if p.color == Color.White then acc + pieceScore else acc - pieceScore
       case (acc, _) => acc
     }
