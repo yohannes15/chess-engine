@@ -1,4 +1,5 @@
 package chessengine.logic
+
 import chessengine.domain.*
 
 object MoveGenerator:
@@ -25,21 +26,13 @@ object MoveGenerator:
       piece: Piece
   ): List[Move] = piece.role match
     case r @ (Role.Rook | Role.Bishop | Role.Queen) =>
-      r.moveOffsets.flatMap(dir =>
-        generateSliding(state, from, piece, dir)
-      )
-    case r @ (Role.Knight) =>
+      r.moveOffsets.flatMap(dir => generateSliding(state, from, piece, dir))
+    case r @ Role.Knight =>
+      r.moveOffsets.flatMap(offset => generateLeaping(state, from, piece, offset))
+    case r @ Role.King =>
       r.moveOffsets.flatMap(offset =>
         generateLeaping(state, from, piece, offset)
-      )
-    case r @ (Role.King) =>
-      r.moveOffsets.flatMap(offset =>
-        generateLeaping(state, from, piece, offset)
-      ) ++ generateCastlingMoves(
-        state,
-        from,
-        piece
-      )
+      ) ++ generateCastlingMoves(state, from, piece)
     case Role.Pawn =>
       generatePawnMoves(state, from, piece)
 
@@ -54,7 +47,7 @@ object MoveGenerator:
       val nextRank = currRank + dr
       val nextFile = currFile + df
       Square.fromRankAndFile(nextRank, nextFile) match
-        case None         => Nil // Edge of board
+        case None => Nil // Edge of board
         case Some(nextSq) =>
           state.board.pieces(nextSq.index) match
             case None =>
@@ -108,20 +101,17 @@ object MoveGenerator:
 
     // Forward 1 Move
     val forwardOne =
-      Square.fromRankAndFile(currRank + forward, currFile).flatMap {
-        sq =>
-          if state.board.pieces(sq.index).isEmpty then
-            Some(NormalMove(from, sq, piece, None))
-          else
-            None
+      Square.fromRankAndFile(currRank + forward, currFile).flatMap { sq =>
+        if state.board.pieces(sq.index).isEmpty then
+          Some(NormalMove(from, sq, piece, None))
+        else None
       }
     // Forward 2 Move -> Only check if forwarDone was successful
     val forwardTwo = if isStartingRank && forwardOne.isDefined then
-      Square.fromRankAndFile(currRank + 2 * forward, currFile).flatMap {
-        sq =>
-          if state.board.pieces(sq.index).isEmpty then
-            Some(NormalMove(from, sq, piece, None))
-          else None
+      Square.fromRankAndFile(currRank + 2 * forward, currFile).flatMap { sq =>
+        if state.board.pieces(sq.index).isEmpty then
+          Some(NormalMove(from, sq, piece, None))
+        else None
       }
     else None
     // Captures
@@ -133,9 +123,9 @@ object MoveGenerator:
           case _ => None
       }
     }
-    val potentialMoves: List[NormalMove] = (
+    val potentialMoves: List[NormalMove] =
       forwardOne.toList ++ forwardTwo.toList ++ captures.toList
-    )
+
     // Check if potential moves are promotion
     // "For each move, if it's a promotion, give me 4 moves. otherwise, give me 1."
     val allMoves = potentialMoves.flatMap { move =>
@@ -147,8 +137,7 @@ object MoveGenerator:
         List(Role.Queen, Role.Rook, Role.Bishop, Role.Knight).map(role =>
           PromotionMove(move.from, move.to, move.piece, role, move.capture)
         )
-      else
-        List(move)
+      else List(move)
     }
     allMoves
 
@@ -163,80 +152,37 @@ object MoveGenerator:
       from: Square,
       piece: Piece
   ): List[Move] =
-    (piece.role, piece.color, from.toNotation) match
-      case (Role.King, Color.White, "e1") =>
-        val kingSide =
-          if (
-              state.castlingRights.whiteKingSide &&
-              canCastle(state, "e1", "f1", "g1", piece.color.opposite)
-            )
-          then
-            Some(
-              CastlingMove(
-                from = from,
-                to = Square.fromNotation("g1").get,
-                rookFrom = Square.fromNotation("h1").get,
-                rookTo = Square.fromNotation("f1").get,
-                piece = piece
-              )
-            )
-          else None
+    val r = if piece.color == Color.White then 1 else 8
+    if from.toNotation != s"e$r" then Nil
+    else
+      val configs = List(
+        // Side, pass, dest, rookFrom, rookTo, extraEmpty
+        (Side.KingSide, s"f$r", s"g$r", s"h$r", s"f$r", Nil),
+        (Side.QueenSide, s"d$r", s"c$r", s"a$r", s"d$r", List(s"b$r"))
+      )
 
-        val queenSide =
-          if (
-              state.castlingRights.whiteQueenSide &&
-              canCastle(state, "e1", "d1", "c1", piece.color.opposite) &&
-              state.board.isEmptyAt(Square.fromNotation("b1").get)
-            )
-          then
-            Some(
-              CastlingMove(
-                from = from,
-                to = Square.fromNotation("c1").get,
-                rookFrom = Square.fromNotation("a1").get,
-                rookTo = Square.fromNotation("d1").get,
-                piece = piece
-              )
-            )
-          else None
-        List(kingSide, queenSide).flatten
-      case (Role.King, Color.Black, "e8") =>
-        val kingSide =
-          if (
-              state.castlingRights.blackKingSide &&
-              canCastle(state, "e8", "f8", "g8", piece.color.opposite)
-            )
-          then
-            Some(
-              CastlingMove(
-                from = from,
-                to = Square.fromNotation("g8").get,
-                rookFrom = Square.fromNotation("h8").get,
-                rookTo = Square.fromNotation("f8").get,
-                piece = piece
-              )
-            )
-          else None
+      configs.flatMap { case (side, pass, dest, rookFrom, rookTo, extra) =>
+        val passSq = Square.fromNotation(pass).get
+        val destSq = Square.fromNotation(dest).get
+        val rookFromSq = Square.fromNotation(rookFrom).get
+        val rookToSq = Square.fromNotation(rookTo).get
+        val extraEmpty = extra.flatMap(Square.fromNotation).forall(state.board.isEmptyAt)
 
-        val queenSide =
-          if (
-              state.castlingRights.blackQueenSide &&
-              canCastle(state, "e8", "d8", "c8", piece.color.opposite) &&
-              state.board.isEmptyAt(Square.fromNotation("b8").get)
+        if state.castlingRights.isAllowed(piece.color, side) &&
+          canCastle(state, from, passSq, destSq, piece.color.opposite) &&
+          extraEmpty
+        then
+          Some(
+            CastlingMove(
+              from = from,
+              to = destSq,
+              rookFrom = rookFromSq,
+              rookTo = rookToSq,
+              piece = piece
             )
-          then
-            Some(
-              CastlingMove(
-                from = from,
-                to = Square.fromNotation("c8").get,
-                rookFrom = Square.fromNotation("a8").get,
-                rookTo = Square.fromNotation("d8").get,
-                piece = piece
-              )
-            )
-          else None
-        List(kingSide, queenSide).flatten
-      case _ => Nil // Not a King on its starting square
+          )
+        else None
+      }
 
   /** To know if a square is attacked by a color C. There are 2 ways
     *   - A) Generate all pseudo-legal moves for every `C` color piece and see
@@ -250,7 +196,6 @@ object MoveGenerator:
       square: Square,
       attackerColor: Color
   ): Boolean =
-    // Method A
     state.board.pieces.zipWithIndex.exists {
       case (Some(piece), idx) if piece.color == attackerColor =>
         pseudoLegalMovesFromSquare(state, Square.fromInt(idx).get)
@@ -272,14 +217,15 @@ object MoveGenerator:
     val currColor = move.piece.color
     val kingSquareAfterMove: Square = move.piece.role match
       case Role.King => move.to
-      case _         =>
-        state.board.pieces.zipWithIndex.collectFirst {
-          case (Some(Piece(color, Role.King)), idx) if color == currColor =>
-            Square.fromInt(idx).get
-        }.get // safe because every valid board must have a king
+      case _ =>
+        state.board.pieces.zipWithIndex
+          .collectFirst {
+            case (Some(Piece(color, Role.King)), idx) if color == currColor =>
+              Square.fromInt(idx).get
+          }
+          .get // safe because every valid board must have a king
 
     val newState = state.applyMove(move)
-
     !isSquareAttacked(newState, kingSquareAfterMove, currColor.opposite)
 
   /** Given kingSq(starting), its passSq(passing square) and destSq(destination
@@ -287,18 +233,12 @@ object MoveGenerator:
     */
   def canCastle(
       state: GameState,
-      kingSq: String,
-      passSq: String,
-      destSq: String,
+      kingSq: Square,
+      passSq: Square,
+      destSq: Square,
       attackerColor: Color
   ): Boolean =
-    val squares = List(kingSq, passSq, destSq).flatMap(Square.fromNotation)
-
-    // Are all these squares empty (except the kingStart)
-    val pathEmpty = squares.takeRight(2).forall(state.board.isEmptyAt)
-
-    // Are all these squares safe from attack
-    val pathSafe =
-      squares.forall(sq => !isSquareAttacked(state, sq, attackerColor))
-
+    val path = List(kingSq, passSq, destSq)
+    val pathEmpty = state.board.isEmptyAt(passSq) && state.board.isEmptyAt(destSq)
+    val pathSafe = path.forall(sq => !isSquareAttacked(state, sq, attackerColor))
     pathEmpty && pathSafe

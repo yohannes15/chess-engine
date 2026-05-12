@@ -1,19 +1,26 @@
 package chessengine.domain
 
+enum Side:
+  case KingSide, QueenSide
+
 final case class CastlingRights(
     whiteKingSide: Boolean = false,
     whiteQueenSide: Boolean = false,
     blackKingSide: Boolean = false,
     blackQueenSide: Boolean = false
 ):
+  def isAllowed(color: Color, side: Side): Boolean = (color, side) match
+    case (Color.White, Side.KingSide)  => whiteKingSide
+    case (Color.White, Side.QueenSide) => whiteQueenSide
+    case (Color.Black, Side.KingSide)  => blackKingSide
+    case (Color.Black, Side.QueenSide) => blackQueenSide
+
   def update(move: Move): CastlingRights =
-    move match
+    val rightsAfterMove = move match
       case CastlingMove(_, _, _, _, piece, _) =>
         piece.color match
-          case Color.White =>
-            this.copy(whiteKingSide = false, whiteQueenSide = false)
-          case Color.Black =>
-            this.copy(blackKingSide = false, blackQueenSide = false)
+          case Color.White => this.copy(whiteKingSide = false, whiteQueenSide = false)
+          case Color.Black => this.copy(blackKingSide = false, blackQueenSide = false)
 
       case m: (NormalMove | PromotionMove) =>
         val withMovingPiece = m.piece match
@@ -39,6 +46,8 @@ final case class CastlingRights(
           case "h8" => withMovingPiece.copy(blackKingSide = false)
           case _    => withMovingPiece
 
+    rightsAfterMove
+
 final case class GameState(
     board: Board,
     color: Color,
@@ -54,10 +63,7 @@ final case class GameState(
       case m: NormalMove =>
         board.update(m.from, None).update(m.to, Some(m.piece))
       case m: PromotionMove =>
-        board.update(
-          m.from,
-          None
-        ).update(m.to, Some(Piece(m.piece.color, m.promotion)))
+        board.update(m.from, None).update(m.to, Some(Piece(m.piece.color, m.promotion)))
       case m: CastlingMove =>
         board
           .update(m.from, None)
