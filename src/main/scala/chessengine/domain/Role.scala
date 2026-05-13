@@ -1,7 +1,7 @@
 package chessengine.domain
 
 enum Role:
-  case Pawn, Rook, Knight, Bishop, Queen, King
+  case Pawn, Knight, Bishop, Rook, Queen, King
 
   def weight: Int =
     this match
