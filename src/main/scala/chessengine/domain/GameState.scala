@@ -5,8 +5,8 @@ import chessengine.engine.Zobrist
 final case class GameState(
     board: Board,
     color: Color,
-    captures: List[Piece] = Nil,
-    castlingRights: CastlingRights = CastlingRights(),
+    captures: List[Piece],
+    castlingRights: CastlingRights,
     enPassantSquare: Option[Square],
     hash: Long
 ):
