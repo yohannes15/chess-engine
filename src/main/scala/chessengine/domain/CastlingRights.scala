@@ -50,17 +50,4 @@ final case class CastlingRights private (
     rightsAfterMove
 
 object CastlingRights:
-  def apply(
-      whiteKingSide: Boolean = false,
-      whiteQueenSide: Boolean = false,
-      blackKingSide: Boolean = false,
-      blackQueenSide: Boolean = false
-  ): CastlingRights =
-    new CastlingRights(
-      whiteKingSide,
-      whiteQueenSide,
-      blackKingSide,
-      blackQueenSide
-    )
-
   def initial: CastlingRights = CastlingRights(true, true, true, true)

@@ -71,7 +71,7 @@ object GameState:
   def initial: GameState =
     val board = Board.initial
     val color = Color.White
-    val rights = CastlingRights(true, true, true, true)
+    val rights = CastlingRights.initial
     val ep = None
     val hash = Zobrist.initialHash(board, color, rights, ep)
     GameState(board, color, Nil, rights, ep, hash)
