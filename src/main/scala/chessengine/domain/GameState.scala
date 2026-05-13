@@ -11,7 +11,6 @@ final case class GameState(
     hash: Long
 ):
   def applyMove(move: Move): GameState =
-    val forward = if color == Color.White then 1 else -1
     val newCaptures = move.capture match
       case Some(p) => captures :+ p
       case None    => captures
@@ -32,7 +31,7 @@ final case class GameState(
           .update(m.rookTo, Some(Piece(m.piece.color, Role.Rook)))
       case m: EnPassantMove =>
         val capturedSquare = Square.fromRankAndFile(
-          m.to.rank - forward,
+          m.from.rank,
           m.to.file
         ).get
         board

@@ -8,8 +8,13 @@ import scala.util.Random
   */
 object Zobrist:
   private val random = Random(42)
+
   val pieceTable = Vector.fill(64, 12)(random.nextLong)
-  // black / white
+
+  /** sideToMove represents Black's turn. Initialized to 0L for White, and XORed
+    * with this value to toggle to Black. XORing again toggles back to White
+    * (0L).
+    */
   val sideToMove = random.nextLong
   // all combinations of the 4 castling rights (2 * 2 * 2 * 2)
   val castlingTable = Vector.fill(16)(random.nextLong)
