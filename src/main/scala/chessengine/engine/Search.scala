@@ -29,25 +29,39 @@ object Search:
     * The negative sign -minimax is the mathematical way of saying: "Your gain is my loss."
     */
   def bestMove(state: GameState, depth: Int = 3): Option[Move] =
-    val moves = allLegalMoves(state)
-    moves match
-      case Nil => None
-      case _   => Some(
-          moves.maxBy(m =>
-            val nextTurnBestScore = minimax(state.applyMove(m), depth - 1)
-            // what is good for my opponent is bad for current and vice versa
-            -nextTurnBestScore
+    def searchMove(
+        moves: List[Move],
+        bestSoFar: Option[Move],
+        alpha: Int // AKA floor (min score that player is already assured of)
+    ): Option[Move] =
+      moves match
+        case Nil       => bestSoFar
+        case m :: tail =>
+          val score = -minimax(
+            state.applyMove(m),
+            depth - 1,
+            -Int.MaxValue,
+            -alpha
           )
-        )
+          val nextAlpha = Math.max(alpha, score)
+          val nextMove = if score > alpha then Some(m) else bestSoFar
+          searchMove(tail, nextMove, nextAlpha)
 
-  /** Recursive Negamax function. Returns the best possible score for the player
-    * whose turn it is in the given state.
+    searchMove(allLegalMoves(state), None, -Int.MaxValue)
+
+  /** Recursive Negamax function with Alpha-Beta pruning. Returns the best
+    * possible score for the player whose turn it is in the given state.
     *
-    * NOTE: Answers the question I'm about to move from this state. If I play
-    * perfectly for the next `depth` steps, whats the best score I can get. The
-    * -minimax(...) part is explained above in bestMove, same reasoning here.
+    * @param state
+    *   current GameState
+    * @param depth
+    *   current ply (depth 0 means we have reached our decision point)
+    * @param alpha
+    *   the "floor" - the minimum score the current player is already assured of
+    * @param beta
+    *   the "ceiling" - the maximum score the opponent is willing to allow
     */
-  def minimax(state: GameState, depth: Int): Int =
+  def minimax(state: GameState, depth: Int, alpha: Int, beta: Int): Int =
     if depth == 0 then
       Evaluation(state).score
     else if isCheckmate(state) then
@@ -55,9 +69,39 @@ object Search:
     else if isStalemate(state) then
       StalemateScore
     else
-      // Standard Negamax recursion: max of -(opponent's best score)
-      allLegalMoves(state).map(m =>
-        val nextTurnBestScore = minimax(state.applyMove(m), depth - 1)
-        // what is good for my opponent is bad for current and vice versa
-        -nextTurnBestScore
-      ).max
+      /** Iterates through moves and returns the best score found. If a score >=
+        * beta is found, we "prune" (stop searching) because a smart opponent
+        * would never let the game reach this position.
+        *
+        * @param moves
+        *   list of moves to evaluate
+        * @param bestScoreSoFar
+        *   best floor until this point
+        */
+      def searchMove(moves: List[Move], bestScoreSoFar: Int): Int =
+        moves match
+          case Nil =>
+            // We've looked at all moves; return the best one we found
+            bestScoreSoFar
+          case m :: tail =>
+            // 1. Evaluate the move (Negamax flip)
+            // What is a "floor" for me is a "ceiling" for my opponent.
+            val score = -minimax(
+              state.applyMove(m),
+              depth - 1,
+              -beta,
+              -bestScoreSoFar
+            )
+
+            // 2. Pruning Moment (Fail-Soft)
+            if score >= beta then
+              // This move is so good for me that the opponent will veto this branch.
+              // We return the score immediately and stop looking at other moves.
+              score
+            else
+              // 3. Update our best score and continue to the next move
+              val nextBestScore = Math.max(bestScoreSoFar, score)
+              searchMove(tail, nextBestScore)
+
+      // Start the search with the current alpha as our initial best score
+      searchMove(allLegalMoves(state), alpha)
