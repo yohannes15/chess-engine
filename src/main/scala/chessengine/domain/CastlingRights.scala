@@ -1,10 +1,10 @@
 package chessengine.domain
 
-final case class CastlingRights(
-    whiteKingSide: Boolean = false,
-    whiteQueenSide: Boolean = false,
-    blackKingSide: Boolean = false,
-    blackQueenSide: Boolean = false
+final case class CastlingRights private (
+    whiteKingSide: Boolean,
+    whiteQueenSide: Boolean,
+    blackKingSide: Boolean,
+    blackQueenSide: Boolean
 ):
   def isAllowed(color: Color, side: Side): Boolean = (color, side) match
     case (Color.White, Side.KingSide)  => whiteKingSide
@@ -48,3 +48,19 @@ final case class CastlingRights(
       case _ => this
 
     rightsAfterMove
+
+object CastlingRights:
+  def apply(
+      whiteKingSide: Boolean = false,
+      whiteQueenSide: Boolean = false,
+      blackKingSide: Boolean = false,
+      blackQueenSide: Boolean = false
+  ): CastlingRights =
+    new CastlingRights(
+      whiteKingSide,
+      whiteQueenSide,
+      blackKingSide,
+      blackQueenSide
+    )
+
+  def initial: CastlingRights = CastlingRights(true, true, true, true)
