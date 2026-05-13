@@ -1,5 +1,7 @@
 package chessengine.domain
 
+import chessengine.engine.Zobrist
+
 enum Side:
   case KingSide, QueenSide
 
@@ -57,8 +59,8 @@ final case class GameState(
     color: Color,
     captures: List[Piece] = Nil,
     castlingRights: CastlingRights = CastlingRights(),
-    // which square is "vulnerable" to En Passant.
-    enPassantSquare: Option[Square]
+    enPassantSquare: Option[Square],
+    hash: Long
 ):
   def applyMove(move: Move): GameState =
     val forward = if color == Color.White then 1 else -1
@@ -84,24 +86,44 @@ final case class GameState(
         val capturedSquare = Square.fromRankAndFile(
           m.to.rank - forward,
           m.to.file
-        )
+        ).get
         board
           .update(m.from, None)
           .update(m.to, Some(m.piece))
-          .update(capturedSquare.get, None)
+          .update(capturedSquare, None)
 
     val nextEnPassantSquare = move match
       case m: NormalMove
           if m.piece.role == Role.Pawn &&
             Math.abs(m.from.rank - m.to.rank) == 2 =>
-        // Calculate the square between from and to
         Square.fromRankAndFile((m.from.rank + m.to.rank) / 2, m.from.file)
       case _ => None
+
+    val nextCastlingRights = castlingRights.update(move)
+
+    val nextHash = Zobrist.updateHash(
+      hash,
+      move,
+      castlingRights,
+      nextCastlingRights,
+      enPassantSquare,
+      nextEnPassantSquare
+    )
 
     this.copy(
       board = newBoard,
       color = color.opposite,
       captures = newCaptures,
-      castlingRights = castlingRights.update(move),
-      enPassantSquare = nextEnPassantSquare
+      castlingRights = nextCastlingRights,
+      enPassantSquare = nextEnPassantSquare,
+      hash = nextHash
     )
+
+object GameState:
+  def initial: GameState =
+    val board = Board.initial
+    val color = Color.White
+    val rights = CastlingRights(true, true, true, true)
+    val ep = None
+    val hash = Zobrist.initialHash(board, color, rights, ep)
+    GameState(board, color, Nil, rights, ep, hash)

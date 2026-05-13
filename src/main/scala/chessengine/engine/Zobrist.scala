@@ -38,21 +38,85 @@ object Zobrist:
     val bq = if rights.blackQueenSide then 8 else 0 // BIT 3
     wk + wq + bk + bq
 
-  def initialHash(state: GameState): Long =
+  def initialHash(
+      board: Board,
+      color: Color,
+      castlingRights: CastlingRights,
+      enPassantSquare: Option[Square]
+  ): Long =
     val allPiecesOnBoardHash: Long =
-      state.board.pieces.zipWithIndex.foldLeft(0L) {
+      board.pieces.zipWithIndex.foldLeft(0L) {
         case (hash, (Some(piece), sqIdx)) =>
           val pieceSquareValue = pieceTable(sqIdx)(pieceIndex(piece))
           hash ^ pieceSquareValue
         case (hash, _) => hash
       }
-    val sideToMoveHash: Long = state.color match
+    val sideToMoveHash: Long = color match
       case Color.White => 0L
       case Color.Black => sideToMove
     val castlingRightsHash: Long =
-      castlingTable(castlingRightIndex(state.castlingRights))
-    val enPassantHash: Long = state.enPassantSquare match
+      castlingTable(castlingRightIndex(castlingRights))
+    val enPassantHash: Long = enPassantSquare match
       case Some(sq) => enPassantTable(sq.file)
       case None     => 0L
 
     allPiecesOnBoardHash ^ sideToMoveHash ^ castlingRightsHash ^ enPassantHash
+
+  def updateHash(
+      oldHash: Long,
+      move: Move,
+      oldCastlingRights: CastlingRights,
+      newCastlingRights: CastlingRights,
+      oldEnPassantSquare: Option[Square],
+      newEnPassantSquare: Option[Square]
+  ): Long =
+    val hashAfterPieces: Long = move match
+      case m: NormalMove =>
+        val pieceIdx = pieceIndex(m.piece)
+        val h = oldHash ^ pieceTable(m.from.index)(pieceIdx) ^
+          pieceTable(m.to.index)(pieceIdx)
+        m.capture.fold(h)(victim =>
+          h ^ pieceTable(m.to.index)(pieceIndex(victim))
+        )
+
+      case m: PromotionMove =>
+        val pawnIdx = pieceIndex(m.piece)
+        val promotedIdx = pieceIndex(Piece(m.piece.color, m.promotion))
+        val h = oldHash ^ pieceTable(m.from.index)(pawnIdx) ^
+          pieceTable(m.to.index)(promotedIdx)
+        m.capture.fold(h)(victim =>
+          h ^ pieceTable(m.to.index)(pieceIndex(victim))
+        )
+
+      case m: CastlingMove =>
+        val kingIdx = pieceIndex(m.piece)
+        val rookIdx = pieceIndex(Piece(m.piece.color, Role.Rook))
+        oldHash ^
+          pieceTable(m.from.index)(kingIdx) ^ pieceTable(m.to.index)(kingIdx) ^
+          pieceTable(m.rookFrom.index)(rookIdx) ^
+          pieceTable(m.rookTo.index)(rookIdx)
+
+      case m: EnPassantMove =>
+        val pawnIdx = pieceIndex(m.piece)
+        val victimIdx = pieceIndex(Piece(m.piece.color.opposite, Role.Pawn))
+        // The victim is at (from.rank, to.file)
+        val victimSq = Square.fromRankAndFile(m.from.rank, m.to.file).get
+        oldHash ^
+          pieceTable(m.from.index)(pawnIdx) ^ pieceTable(m.to.index)(pawnIdx) ^
+          pieceTable(victimSq.index)(victimIdx)
+
+    val hashAfterSide = hashAfterPieces ^ sideToMove
+
+    val hashAfterCastling = if oldCastlingRights != newCastlingRights then
+      hashAfterSide ^ castlingTable(castlingRightIndex(oldCastlingRights)) ^
+        castlingTable(castlingRightIndex(newCastlingRights))
+    else hashAfterSide
+
+    val hashAfterOldEP = oldEnPassantSquare.fold(hashAfterCastling)(sq =>
+      hashAfterCastling ^ enPassantTable(sq.file)
+    )
+    val finalHash = newEnPassantSquare.fold(hashAfterOldEP)(sq =>
+      hashAfterOldEP ^ enPassantTable(sq.file)
+    )
+
+    finalHash
