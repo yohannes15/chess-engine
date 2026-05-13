@@ -98,12 +98,14 @@ object Zobrist:
 
       case m: EnPassantMove =>
         val pawnIdx = pieceIndex(m.piece)
-        val victimIdx = pieceIndex(Piece(m.piece.color.opposite, Role.Pawn))
         // The victim is at (from.rank, to.file)
         val victimSq = Square.fromRankAndFile(m.from.rank, m.to.file).get
-        oldHash ^
-          pieceTable(m.from.index)(pawnIdx) ^ pieceTable(m.to.index)(pawnIdx) ^
-          pieceTable(victimSq.index)(victimIdx)
+        val h = oldHash ^ pieceTable(m.from.index)(pawnIdx) ^
+          pieceTable(m.to.index)(pawnIdx)
+
+        m.capture.fold(h)(victim =>
+          h ^ pieceTable(victimSq.index)(pieceIndex(victim))
+        )
 
     val hashAfterSide = hashAfterPieces ^ sideToMove
 
