@@ -51,15 +51,9 @@ object Search:
 
   /** Recursive Negamax function with Alpha-Beta pruning. Returns the best
     * possible score for the player whose turn it is in the given state.
-    *
-    * @param state
-    *   current GameState
-    * @param depth
-    *   current ply (depth 0 means we have reached our decision point)
-    * @param alpha
-    *   the "floor" - the minimum score the current player is already assured of
-    * @param beta
-    *   the "ceiling" - the maximum score the opponent is willing to allow
+    *   - depth | "ply" - depth 0 is decision state
+    *   - alpha | "floor" - minimum score curr player is already assured of
+    *   - beta | "ceiling" - maximum score opponent is willing to allow
     */
   def minimax(state: GameState, depth: Int, alpha: Int, beta: Int): Int =
     if depth == 0 then
@@ -72,20 +66,11 @@ object Search:
       /** Iterates through moves and returns the best score found. If a score >=
         * beta is found, we "prune" (stop searching) because a smart opponent
         * would never let the game reach this position.
-        *
-        * @param moves
-        *   list of moves to evaluate
-        * @param bestScoreSoFar
-        *   best floor until this point
         */
       def searchMove(moves: List[Move], bestScoreSoFar: Int): Int =
         moves match
-          case Nil =>
-            // We've looked at all moves; return the best one we found
-            bestScoreSoFar
+          case Nil       => bestScoreSoFar
           case m :: tail =>
-            // 1. Evaluate the move (Negamax flip)
-            // What is a "floor" for me is a "ceiling" for my opponent.
             val score = -minimax(
               state.applyMove(m),
               depth - 1,
@@ -93,15 +78,14 @@ object Search:
               -bestScoreSoFar
             )
 
-            // 2. Pruning Moment (Fail-Soft)
+            // Pruning (Fail-Soft)
             if score >= beta then
               // This move is so good for me that the opponent will veto this branch.
               // We return the score immediately and stop looking at other moves.
               score
             else
-              // 3. Update our best score and continue to the next move
+              // Update our best score and continue to the next move
               val nextBestScore = Math.max(bestScoreSoFar, score)
               searchMove(tail, nextBestScore)
 
-      // Start the search with the current alpha as our initial best score
       searchMove(allLegalMoves(state), alpha)
