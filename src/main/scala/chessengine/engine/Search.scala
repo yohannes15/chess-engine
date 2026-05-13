@@ -47,7 +47,8 @@ object Search:
           val nextMove = if score > alpha then Some(m) else bestSoFar
           searchMove(tail, nextMove, nextAlpha)
 
-    searchMove(allLegalMoves(state), None, -Int.MaxValue)
+    val legalMoves = allLegalMoves(state).sortBy(m => -guessValue(m))
+    searchMove(legalMoves, None, -Int.MaxValue)
 
   /** Recursive Negamax function with Alpha-Beta pruning. Returns the best
     * possible score for the player whose turn it is in the given state.
@@ -88,4 +89,14 @@ object Search:
               val nextBestScore = Math.max(bestScoreSoFar, score)
               searchMove(tail, nextBestScore)
 
-      searchMove(allLegalMoves(state), alpha)
+      val legalMoves = allLegalMoves(state).sortBy(m => -guessValue(m))
+      searchMove(legalMoves, alpha)
+
+  def guessValue(m: Move): Int = m match
+    case NormalMove(_, _, _, Some(victim)) =>
+      victim.role.weight * 10 - m.piece.role.weight
+    case PromotionMove(_, _, _, promotion, Some(victim)) =>
+      victim.role.weight * 10 + promotion.weight - m.piece.role.weight
+    case PromotionMove(_, _, _, promotion, None) =>
+      promotion.weight
+    case _ => 0
