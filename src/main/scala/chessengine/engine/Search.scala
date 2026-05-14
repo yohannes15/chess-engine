@@ -6,7 +6,8 @@ import ScoreType.*
 
 class Search(tt: TranspositionTable):
 
-  private val MateScore = 1000000
+  private val CheckMateScore = 1000000
+  private val CheckMateThreshold = 900000
   private val StalemateScore = 0
 
   /** Finds the best move for the current player using a Negamax search with
@@ -20,7 +21,7 @@ class Search(tt: TranspositionTable):
     *   The best move found, or None if no legal moves exist.
     */
   def bestMove(state: GameState, depth: Int): Option[Move] =
-    val (_, bestMove) = minimax(state, depth, -Int.MaxValue, Int.MaxValue)
+    val (_, bestMove) = minimax(state, 0, depth, -Int.MaxValue, Int.MaxValue)
     bestMove
 
   /** Recursive Negamax function with Alpha-Beta pruning and Transposition Table
@@ -31,6 +32,9 @@ class Search(tt: TranspositionTable):
     *
     * @param state
     *   The current game state.
+    * @param ply
+    *   The current distance from the root of the search (number of half-moves).
+    *   Used for normalizing checkmate scores.
     * @param depth
     *   The remaining search depth.
     * @param alpha
@@ -42,22 +46,24 @@ class Search(tt: TranspositionTable):
     */
   def minimax(
       state: GameState,
+      ply: Int,
       depth: Int,
       alpha: Int,
       beta: Int
   ): (Int, Option[Move]) =
-    val alphaOriginal = alpha
     val cachedEntry = tt.lookup(state.hash)
 
     (cachedEntry, depth) match
       case (Some(entry), _)
-          if entry.depth >= depth &&
-            (
-              entry.scoreType == Exact ||
-                (entry.scoreType == LowerBound && entry.score >= beta) ||
-                (entry.scoreType == UpperBound && entry.score <= alpha)
-            ) =>
-        (entry.score, Some(entry.bestMove))
+          if entry.depth >= depth && (
+          {
+            val score = scoreFromTT(entry.score, ply)
+            val sType = entry.scoreType
+            sType == Exact ||
+            sType == LowerBound && score >= beta ||
+            sType == UpperBound && score <= alpha
+          }) =>
+        (scoreFromTT(entry.score, ply), Some(entry.bestMove))
 
       case (_, 0) =>
         // Leaf node: return static evaluation. No move is returned because
@@ -66,7 +72,7 @@ class Search(tt: TranspositionTable):
 
       case _ if isCheckmate(state) =>
         // Terminal node: checkmate. No move is possible.
-        (-MateScore - depth, None)
+        (-CheckMateScore + ply, None)
 
       case _ if isStalemate(state) =>
         // Terminal node: stalemate. No move is possible.
@@ -85,6 +91,7 @@ class Search(tt: TranspositionTable):
               // Negamax recursion: negate the score returned by the child
               val (childScore, _) = minimax(
                 state.applyMove(m),
+                ply + 1,
                 depth - 1,
                 -beta,
                 -bestScore
@@ -105,11 +112,17 @@ class Search(tt: TranspositionTable):
 
         val scoreType: ScoreType =
           if bestScore >= beta then LowerBound
-          else if bestScore <= alphaOriginal then UpperBound
+          else if bestScore <= alpha then UpperBound
           else Exact
 
         bestMove.foreach(m =>
-          tt.store(TTEntry(state.hash, depth, bestScore, scoreType, m))
+          tt.store(TTEntry(
+            state.hash,
+            depth,
+            scoreToTT(bestScore, ply),
+            scoreType,
+            m
+          ))
         )
 
         (bestScore, bestMove)
@@ -145,3 +158,38 @@ class Search(tt: TranspositionTable):
     case PromotionMove(_, _, _, promotion, None) =>
       promotion.weight
     case _ => 0
+
+  /** Converts a normalized score from the Transposition Table back into a
+    * ply-relative score for the current search.
+    *
+    * @param score
+    *   The absolute score from the TT.
+    * @param ply
+    *   The current search depth from the root.
+    * @return
+    *   A score relative to the current position.
+    */
+  def scoreFromTT(score: Int, ply: Int): Int =
+    scoreToTT(score, -ply)
+
+  /** Converts a ply-relative score into a normalized "absolute" score for
+    * storage in the Transposition Table.
+    *
+    * Checkmate score depends on ply, we need to it store in universal fashion
+    * Example:
+    *   - We find a 'mate in 2' at 'ply' 2. Score is 999,998.
+    *   - scoreToTT(999998, 2) -> 999998 + 2 = 1,000,000.
+    *   - We find a 'we will get mated' at 'ply' 2. Score is -999,998
+    *   - scoreToTT(-999998, 2) -> -999998 - 2 = -1,000,000
+    *
+    * @param score
+    *   The score to normalize.
+    * @param ply
+    *   The distance from the root where the score was found.
+    * @return
+    *   An absolute score independent of search depth.
+    */
+  def scoreToTT(score: Int, ply: Int): Int =
+    if score > CheckMateThreshold then score + ply
+    else if score < -CheckMateThreshold then score - ply
+    else score
