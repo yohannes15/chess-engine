@@ -2,8 +2,9 @@ package chessengine.engine
 
 import chessengine.domain.*
 import chessengine.logic.MoveGenerator.{allLegalMoves, isCheckmate, isStalemate}
+import ScoreType.*
 
-object Search:
+class Search(tt: TranspositionTable):
 
   private val MateScore = 1000000
   private val StalemateScore = 0
@@ -57,40 +58,47 @@ object Search:
     *   - beta | "ceiling" - maximum score opponent is willing to allow
     */
   def minimax(state: GameState, depth: Int, alpha: Int, beta: Int): Int =
-    if depth == 0 then
-      Evaluation(state).score
-    else if isCheckmate(state) then
-      -MateScore - depth
-    else if isStalemate(state) then
-      StalemateScore
-    else
-      /** Iterates through moves and returns the best score found. If a score >=
-        * beta is found, we "prune" (stop searching) because a smart opponent
-        * would never let the game reach this position.
-        */
-      def searchMove(moves: List[Move], bestScoreSoFar: Int): Int =
-        moves match
-          case Nil       => bestScoreSoFar
-          case m :: tail =>
-            val score = -minimax(
-              state.applyMove(m),
-              depth - 1,
-              -beta,
-              -bestScoreSoFar
-            )
+    (tt.lookup(state.hash), depth) match
+      case (Some(entry), _)
+          if entry.depth >= depth &&
+            (
+              entry.scoreType == Exact ||
+                (entry.scoreType == LowerBound && entry.score >= beta) ||
+                (entry.scoreType == UpperBound && entry.score <= alpha)
+            ) =>
+        entry.score
+      // base case, depth 0 -> score time
+      case (_, 0)                  => Evaluation(state).score
+      case _ if isCheckmate(state) => -MateScore - depth
+      case _ if isStalemate(state) => StalemateScore
+      case _                       =>
+        /** Iterates through moves and returns the best score found. If a score
+          * >= beta is found, we "prune" (stop searching) because a smart
+          * opponent would never let the game reach this position.
+          */
+        def searchMove(moves: List[Move], bestScoreSoFar: Int): Int =
+          moves match
+            case Nil       => bestScoreSoFar
+            case m :: tail =>
+              val score = -minimax(
+                state.applyMove(m),
+                depth - 1,
+                -beta,
+                -bestScoreSoFar
+              )
 
-            // Pruning (Fail-Soft)
-            if score >= beta then
-              // This move is so good for me that the opponent will veto this branch.
-              // We return the score immediately and stop looking at other moves.
-              score
-            else
-              // Update our best score and continue to the next move
-              val nextBestScore = Math.max(bestScoreSoFar, score)
-              searchMove(tail, nextBestScore)
+              // Pruning (Fail-Soft)
+              if score >= beta then
+                // This move is so good for me that the opponent will veto this branch.
+                // We return the score immediately and stop looking at other moves.
+                score
+              else
+                // Update our best score and continue to the next move
+                val nextBestScore = Math.max(bestScoreSoFar, score)
+                searchMove(tail, nextBestScore)
 
-      val legalMoves = allLegalMoves(state).sortBy(m => -guessValue(m))
-      searchMove(legalMoves, alpha)
+        val legalMoves = allLegalMoves(state).sortBy(m => -guessValue(m))
+        searchMove(legalMoves, alpha)
 
   def guessValue(m: Move): Int = m match
     case NormalMove(_, _, _, Some(victim)) =>
