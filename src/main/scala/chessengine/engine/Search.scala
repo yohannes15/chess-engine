@@ -19,7 +19,7 @@ class Search(tt: TranspositionTable):
     * @return
     *   The best move found, or None if no legal moves exist.
     */
-  def bestMove(state: GameState, depth: Int = 3): Option[Move] =
+  def bestMove(state: GameState, depth: Int): Option[Move] =
     val (_, bestMove) = minimax(state, depth, -Int.MaxValue, Int.MaxValue)
     bestMove
 
