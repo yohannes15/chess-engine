@@ -14,7 +14,7 @@ import chessengine.domain.{Move}
   * @param bestMove:
   *   The move that produced the best score (used for move ordering).
   */
-final case class TTEntry(
+private final case class TTEntry(
     hash: Long,
     depth: Int,
     score: Int,
