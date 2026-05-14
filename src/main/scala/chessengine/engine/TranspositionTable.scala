@@ -1,7 +1,5 @@
 package chessengine.engine
 
-import chessengine.domain.{Move}
-
 /** cache that stores the results of previous searches to avoid redundant work
   * when the same position is reached via different move orders.
   */
