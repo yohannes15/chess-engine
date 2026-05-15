@@ -12,6 +12,14 @@ enum Role:
       case Queen  => 900
       case King   => 20000
 
+  def toUci: String =
+    this match
+      case Knight => "n"
+      case Bishop => "b"
+      case Rook   => "r"
+      case Queen  => "q"
+      case _      => ""
+
   def isSliding: Boolean = this match
     case Rook | Bishop | Queen => true
     case _                     => false

@@ -8,6 +8,7 @@ import chessengine.engine.Search
 import chessengine.engine.TranspositionTable as TTable
 import org.http4s.HttpApp
 import cats.effect.kernel.Resource
+import chessengine.api.routes.ChessRoutes
 
 object Main extends IOApp.Simple:
   def run: IO[Unit] =

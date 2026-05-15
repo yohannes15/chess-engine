@@ -13,6 +13,13 @@ sealed trait Move:
   def piece: Piece // moving piece
   def capture: Option[Piece]
 
+  private final val _UCI: String = s"${from.toNotation}${to.toNotation}"
+
+  def toUCI: String =
+    this match
+      case m: PromotionMove => _UCI + m.promotion.toUci
+      case _                => _UCI
+
 case class NormalMove(
     from: Square,
     to: Square,
