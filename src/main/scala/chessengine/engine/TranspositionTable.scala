@@ -10,7 +10,7 @@ package chessengine.engine
   * @param size
   *   The total number of slots in the underlying array. Must be a power of 2.
   */
-private class TranspositionTable private (val size: Int):
+class TranspositionTable private (val size: Int):
   private val table: Array[TTEntry] = new Array[TTEntry](size)
   private final val BUCKETS: Int = size / 2
 
