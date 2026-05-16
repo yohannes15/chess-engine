@@ -3,6 +3,7 @@ package chessengine.domain
 import cats.implicits.*
 import chessengine.engine.Zobrist
 import cats.data.ValidatedNec
+import cats.data.Validated
 
 /** FEN (Forsyth-Edwards Notation) is the standard way to describe a chess
   * position in a single line of text.
@@ -13,11 +14,12 @@ object Fen:
 
   def parse(fen: String): ValidatedNec[String, GameState] =
     val parts = fen.trim.split("\\s+").toSeq
-    if parts.length != 6 then
-      s"Expected 6 FEN Fields. got ${parts.length}".invalidNec
+    if parts.length != 4 && parts.length != 6 then
+      s"Expected 4 or 6 FEN Fields. got ${parts.length}".invalidNec
     else
-      val Seq(pieces, side, castling, enP, _, _) = parts
-      val piecesParts = pieces.split("/").toList // `/` separates ranks.
+      val (pieces, side, castling, enP) =
+        (parts(0), parts(1), parts(2), parts(3))
+      val piecesParts = pieces.split("/").toList
       if piecesParts.length != 8 then
         s"""
           Expected 8 Piece fields separated with '/'. got ${piecesParts.length}
@@ -32,7 +34,7 @@ object Fen:
           GameState(
             board,
             color,
-            board.capturedPieces,
+            List.empty, // FEN does not track captured pieces
             castlingRights,
             enPassantSquare,
             Zobrist.initialHash(board, color, castlingRights, enPassantSquare)
@@ -52,30 +54,28 @@ object Fen:
 
   private def parseRank(s: String)
       : ValidatedNec[String, Vector[Option[Piece]]] =
-    if (s.isEmpty)
+    if s.isEmpty then
       "Expected rank string in FEN format. got empty.".invalidNec
     else
-      val isValidLength = s.foldLeft(0) {
-        case (acc, c)
-            if c.isDigit &&
-              ({
-                val emptySquares = c.asDigit
-                emptySquares >= 1 && emptySquares <= 8
-              }) => acc + c.asDigit
+      val rankWidth = s.foldLeft(0) {
+        case (acc, c) if c.isDigit && c.asDigit >= 1 && c.asDigit <= 8 =>
+          acc + c.asDigit
         case (acc, c) if validPieces.contains(c) => acc + 1
-        case _                                   => 100 // ON PURPOSE BAD VALUE
-      } == 8
+        case _                                   => 100 // Invalid character
+      }
 
-      if !isValidLength then s"Invalid rank string. got $s".invalidNec
+      if rankWidth != 8 then
+        s"Invalid rank string (width $rankWidth): $s".invalidNec
       else
         s.foldLeft(Vector.empty[Option[Piece]]) {
-          case (pieces, c) if c.isDigit => pieces ++ List.fill(c.asDigit)(None)
-          case (rankPieces, c)          =>
+          case (pieces, c) if c.isDigit =>
+            pieces ++ Vector.fill(c.asDigit)(None)
+          case (pieces, c) =>
             val piece = Piece(
-              color = (if c.isLower then Color.Black else Color.White),
+              color = if c.isLower then Color.Black else Color.White,
               role = Role.fromChar(c.toLower)
             )
-            rankPieces :+ Some(piece)
+            pieces :+ Some(piece)
         }.validNec
 
   private def parseSide(s: String): ValidatedNec[String, Color] =
@@ -87,9 +87,11 @@ object Fen:
   private def parseEnPassant(s: String): ValidatedNec[String, Option[Square]] =
     s match
       case "-" => None.validNec
-      case _   => Square.fromNotation(s) match
-          case None => s"Invalid enPassantSquare String. got $s".invalidNec
-          case sq   => sq.validNec
+      case _   =>
+        Validated
+          .fromOption(Square.fromNotation(s), s"Invalid enPassantSquare: $s")
+          .map(Some(_))
+          .toValidatedNec
 
   private def parseRights(s: String): ValidatedNec[String, CastlingRights] =
     if (s == "-")

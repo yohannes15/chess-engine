@@ -13,8 +13,6 @@ final case class Board private[domain] (pieces: Vector[Option[Piece]]):
         Square.fromInt(idx)
     }.flatten
 
-  def capturedPieces: List[Piece] = ???
-
 object Board:
   import Color.*
   import Role.*
