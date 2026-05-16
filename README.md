@@ -2,6 +2,12 @@
 
 Building a fully functional and pure chess library and backend in Scala 3, Cats Effect, and Http4s, inspired by `scalachess`.
 
+## Portfolio
+
+A purely functional chess engine implementation in Scala 3 that demonstrates advanced functional programming concepts and concurrent system design. Currently implements move generation, validation, FEN/PGN parsing, and alpha-beta pruning for AI opponents. Built with Cats Effect for side-effect management and Http4s for the REST API layer.
+
+This project showcases bitboard optimization techniques, property-based testing with ScalaCheck, and real-time multiplayer architecture. The goal is to create a production-ready chess library similar to Lichess's scalachess, with WebSocket support for live games and a stateless HTTP API for move validation and engine suggestions.
+
 ## Project Overview
 
 This project aims to build a robust, high-performance chess library and a scalable real-time multiplayer backend. The focus is on functional purity, type safety, and efficient move generation.
