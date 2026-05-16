@@ -8,7 +8,7 @@ object MoveGenerator:
   def allLegalMoves(state: GameState): List[Move] =
     state.board.pieces.zipWithIndex.flatMap {
       case (Some(piece), idx) if piece.color == state.color =>
-        legalMovesFromSquare(state, Square(idx))
+        legalMovesFromSquare(state, Square.fromInt(idx).get)
       case _ => Nil
     }.toList
 
@@ -236,13 +236,13 @@ object MoveGenerator:
   ): Boolean =
     state.board.pieces.zipWithIndex.exists {
       case (Some(piece), idx) if piece.color == attackerColor =>
-        pseudoLegalMovesFromSquare(state, Square(idx))
+        pseudoLegalMovesFromSquare(state, Square.fromInt(idx).get)
           .exists(_.to.index == square.index)
       case _ => false
     }
 
-  /** A move is legal if, after making the move, the moving player's King is
-    * not under attack (not in check).
+  /** A move is legal if, after making the move, the moving player's King is not
+    * under attack (not in check).
     *
     * Note: Special moves like Castling have additional legality rules (e.g.,
     * not moving through check) which are handled during move generation.

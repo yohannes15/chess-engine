@@ -2,9 +2,6 @@ package chessengine.domain
 
 opaque type Square = Int
 object Square:
-  /** Unsafe constructor for internal use where index is guaranteed 0-63 */
-  def apply(i: Int): Square = i
-
   def fromInt(i: Int): Option[Square] =
     if i >= 0 && i < 64 then Some(i) else None
 

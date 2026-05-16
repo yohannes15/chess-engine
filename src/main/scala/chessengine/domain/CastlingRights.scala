@@ -1,6 +1,6 @@
 package chessengine.domain
 
-final case class CastlingRights private (
+final case class CastlingRights(
     whiteKingSide: Boolean,
     whiteQueenSide: Boolean,
     blackKingSide: Boolean,

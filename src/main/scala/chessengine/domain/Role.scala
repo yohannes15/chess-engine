@@ -69,3 +69,14 @@ enum Role:
     (-1, 1), // NW
     (-1, -1) // SW
   )
+
+object Role:
+
+  def fromChar(c: Char): Role =
+    c match
+      case 'p' => Pawn
+      case 'n' => Knight
+      case 'b' => Bishop
+      case 'r' => Rook
+      case 'q' => Queen
+      case 'k' => King

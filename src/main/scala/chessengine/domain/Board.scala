@@ -1,6 +1,6 @@
 package chessengine.domain
 
-final case class Board private (pieces: Vector[Option[Piece]]):
+final case class Board private[domain] (pieces: Vector[Option[Piece]]):
   def update(s: Square, p: Option[Piece]): Board =
     Board(pieces.updated(s.index, p))
 
@@ -10,8 +10,10 @@ final case class Board private (pieces: Vector[Option[Piece]]):
   def findPiece(color: Color, role: Role): Option[Square] =
     pieces.zipWithIndex.collectFirst {
       case (Some(Piece(c, r)), idx) if c == color && r == role =>
-        Square(idx)
-    }
+        Square.fromInt(idx)
+    }.flatten
+
+  def capturedPieces: List[Piece] = ???
 
 object Board:
   import Color.*
