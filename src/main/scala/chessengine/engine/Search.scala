@@ -20,9 +20,9 @@ class Search(tt: TranspositionTable):
     * @return
     *   The best move found, or None if no legal moves exist.
     */
-  def bestMove(state: GameState, depth: Int): Option[Move] =
-    val (_, bestMove) = minimax(state, 0, depth, -Int.MaxValue, Int.MaxValue)
-    bestMove
+  def bestMove(state: GameState, depth: Int): (Option[Move], Int) =
+    val (move, score) = minimax(state, 0, depth, -Int.MaxValue, Int.MaxValue)
+    (move, score)
 
   /** Recursive Negamax function with Alpha-Beta pruning and Transposition Table
     * integration.
@@ -50,7 +50,7 @@ class Search(tt: TranspositionTable):
       depth: Int,
       alpha: Int,
       beta: Int
-  ): (Int, Option[Move]) =
+  ): (Option[Move], Int) =
     val cachedEntry = tt.lookup(state.hash)
 
     (cachedEntry, depth) match
@@ -63,20 +63,20 @@ class Search(tt: TranspositionTable):
             sType == LowerBound && score >= beta ||
             sType == UpperBound && score <= alpha
           }) =>
-        (scoreFromTT(entry.score, ply), Some(entry.bestMove))
+        (Some(entry.bestMove), scoreFromTT(entry.score, ply))
 
       case (_, 0) =>
         // Leaf node: return static evaluation. No move is returned because
         // we didn't search any moves from this position.
-        (Evaluation(state).score, None)
+        (None, Evaluation(state).score)
 
       case _ if isCheckmate(state) =>
         // Terminal node: checkmate. No move is possible.
-        (-CheckMateScore + ply, None)
+        (None, -CheckMateScore + ply)
 
       case _ if isStalemate(state) =>
         // Terminal node: stalemate. No move is possible.
-        (StalemateScore, None)
+        (None, StalemateScore)
 
       case _ =>
         /** Iterates through moves and returns the best score and move found. */
@@ -84,12 +84,12 @@ class Search(tt: TranspositionTable):
             moves: List[Move],
             bestScore: Int,
             bestMove: Option[Move]
-        ): (Int, Option[Move]) =
+        ): (Option[Move], Int) =
           moves match
-            case Nil       => (bestScore, bestMove)
+            case Nil       => (bestMove, bestScore)
             case m :: tail =>
               // Negamax recursion: negate the score returned by the child
-              val (childScore, _) = minimax(
+              val (_, childScore) = minimax(
                 state.applyMove(m),
                 ply + 1,
                 depth - 1,
@@ -98,7 +98,7 @@ class Search(tt: TranspositionTable):
               )
               val score = -childScore
 
-              if score >= beta then (score, Some(m))
+              if score >= beta then (Some(m), score)
               else
                 val (nextBestScore, nextBestMove) =
                   if score > bestScore then (score, Some(m))
@@ -108,7 +108,7 @@ class Search(tt: TranspositionTable):
         // Prioritize the move stored in the TT for better pruning efficiency.
         val ttMove: Option[Move] = cachedEntry.map(e => e.bestMove)
         val legalMoves = allLegalMoves(state).sortBy(m => -scoreMove(m, ttMove))
-        val (bestScore, bestMove) = searchMove(legalMoves, alpha, None)
+        val (bestMove, bestScore) = searchMove(legalMoves, alpha, None)
 
         val scoreType: ScoreType =
           if bestScore >= beta then LowerBound
@@ -125,7 +125,7 @@ class Search(tt: TranspositionTable):
           ))
         )
 
-        (bestScore, bestMove)
+        (bestMove, bestScore)
 
   /** Assigns a priority score to a move to improve Alpha-Beta pruning
     * efficiency.
