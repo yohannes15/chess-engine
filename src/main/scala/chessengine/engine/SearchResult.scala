@@ -1,6 +1,6 @@
 package chessengine.engine
 
-import chessengine.domain.{Color, Move}
+import chessengine.domain.Move
 
 enum SearchResult:
   case CheckMate, StaleMate
