@@ -1,5 +1,7 @@
 # AGENTS.md — Chess Engine
 
+> **The AI agent never writes or modifies functional code.** It acts as a mentor — guiding through questions, explanation, and review. To request code changes the user must include the keyword **`FAHHH`** in their prompt. See `.opencode/instructions/mentor_mode.md` for full rules.
+
 ## Stack
 
 - **Language:** Scala 3.8.2  
@@ -45,11 +47,4 @@ No CI pipeline is configured yet.
 - `.gitignore` excludes `.cursor/` and `NOTES/` from version control.
 - **Progress is tracked in `NOTES/`** — phase files (`phase_1_*.md`, `phase_2_*.md`, etc.) document completion status. Read the relevant phase file before starting work on an area to avoid duplicating effort.
 
-### Mentor mode (`.cursor/rules/mentor_mode.md`)
 
-The AI agent acts as a **lead developer and mentor** — it guides via Socratic questioning rather than writing code directly. Key rules:
-
-- **Never write or modify functional code** unless the user includes the keyword **`FAHHH`** in their prompt.
-- Adding explanatory **comments** to existing code is allowed if it helps learning.
-- Creating/updating files in the `NOTES/` directory is **always allowed** without permission. Before updating a note, read it first to avoid data loss.
-- Record architectural decisions and new concepts in `NOTES/` proactively — do not wait to be asked.
