@@ -1,3 +1,5 @@
+import org.typelevel.scalacoptions.ScalacOptions
+
 val Http4sVersion = "0.23.30"
 val CirceVersion = "0.14.14"
 val MunitVersion = "1.1.1"
@@ -22,5 +24,11 @@ lazy val root = (project in file("."))
     assembly / assemblyMergeStrategy := {
       case "module-info.class" => MergeStrategy.discard
       case x => (assembly / assemblyMergeStrategy).value.apply(x)
-    }
+    },
+    // sbt-tpolecat sets the old -Xfatal-warnings flag, which is deprecated in Scala 3.8+.
+    // Exclude it via tpolecat's own API and use the current flag name instead.
+    Compile / tpolecatExcludeOptions += ScalacOptions.fatalWarnings,
+    Test / tpolecatExcludeOptions += ScalacOptions.fatalWarnings,
+    Compile / scalacOptions ++= Seq("-Werror"),
+    Test / scalacOptions ++= Seq("-Werror")
   )
