@@ -40,7 +40,7 @@ No CI pipeline is configured yet.
 - `TranspositionTable` is a fixed-size array with a dual-bucket strategy (depth-preferred + recent-replace slot per bucket). Size must be a power of 2.
 - `Search` uses **negamax** with alpha-beta pruning and TT lookups. Checkmate scores are ply-adjusted before TT storage.
 - `MoveGenerator.isLegal` applies the move then checks if the moving player's king is attacked.
-- The API route (`POST /best-move`) still passes `???` as the game state — the endpoint is incomplete.
+- The API route (`POST /best-move`) returns a `SearchResult` parsed from the request FEN — functional.
 
 ## Conventions
 
