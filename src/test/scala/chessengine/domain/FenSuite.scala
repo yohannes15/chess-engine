@@ -2,11 +2,9 @@ package chessengine.domain
 
 import cats.data.Validated
 import cats.data.Validated.Valid
+import chessengine.TestHelpers.startingFen
 
 class FenSuite extends munit.FunSuite:
-
-  private val startingFen =
-    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
   test("empty string fails") { assert(Fen.parse("").isInvalid) }
 
