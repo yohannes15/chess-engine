@@ -7,7 +7,7 @@
 - **Language:** Scala 3.8.2  
 - **Build:** sbt 1.12.8  
 - **Effects:** Cats Effect 3, Http4s 0.23, Circe 0.14  
-- **Test:** MUnit + munit-cats-effect (only a test skeleton exists)  
+- **Test:** MUnit + munit-cats-effect (perft + domain + API tests planned)  
 - **Formatter:** scalafmt 3.10.7 (`runner.dialect = scala3`, `rewrite.scala3.removeOptionalBraces.enabled = true`)  
 - **Plugins:** sbt-tpolecat (warnings-as-errors), sbt-revolver, sbt-assembly  
 
@@ -41,6 +41,7 @@ No CI pipeline is configured yet.
 - `Search` uses **negamax** with alpha-beta pruning and TT lookups. Checkmate scores are ply-adjusted before TT storage.
 - `MoveGenerator.isLegal` applies the move then checks if the moving player's king is attacked.
 - The API route (`POST /best-move`) returns a `SearchResult` parsed from the request FEN — functional.
+- The API route (`POST /validate-move`) generates legal moves and matches against the submitted UCI string.
 
 ## Conventions
 
