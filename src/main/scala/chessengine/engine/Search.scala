@@ -22,11 +22,11 @@ class Search(tt: TranspositionTable):
     *   The best move found, or None if no legal moves exist.
     */
   def bestMove(state: GameState, depth: Int): SearchRes =
-    val (mv, score) = minimax(state, 0, depth, -Int.MaxValue, Int.MaxValue)
-    mv match
+    val (move, score) = minimax(state, 0, depth, -Int.MaxValue, Int.MaxValue)
+    move match
       case Some(mv) => BestMove(mv, score)
       case None
-          if (score > CheckMateThreshold && score < -CheckMateThreshold) =>
+          if (score > CheckMateThreshold || score < -CheckMateThreshold) =>
         CheckMate
       case None => StaleMate
 
