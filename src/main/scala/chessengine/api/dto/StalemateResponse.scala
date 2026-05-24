@@ -3,8 +3,8 @@ package chessengine.api.dto
 import io.circe.Encoder
 import io.circe.Json
 
-final case class StalemateResponse()
+final case class StaleMateResponse()
 
-object StalemateResponse:
-  given stalemateResponseEncoder: Encoder[StalemateResponse] =
+object StaleMateResponse:
+  given stalemateResponseEncoder: Encoder[StaleMateResponse] =
     Encoder.instance(_ => Json.obj())

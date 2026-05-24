@@ -12,6 +12,9 @@ import cats.implicits.*
 import io.circe.Json
 import io.circe.syntax.*
 import chessengine.api.dto.BestMoveResponse
+import chessengine.engine.SearchRes.*
+import chessengine.api.dto.CheckMateResponse
+import chessengine.api.dto.StaleMateResponse
 
 private[api] class ChessRoutes(val search: Search):
   def routes: HttpRoutes[IO] =
@@ -30,9 +33,9 @@ private[api] class ChessRoutes(val search: Search):
               ),
             state =>
               search.bestMove(state, request.depth) match
-                case (m, score) => m match
-                    case Some(mv) => BestMoveResponse(mv, score)
-                    case None     => ???
+                case BestMove(mv, score) => BestMoveResponse(mv, score)
+                case CheckMate => CheckMateResponse(state.color.opposite)
+                case StaleMate => StaleMateResponse()
           )
         yield (???)
     }

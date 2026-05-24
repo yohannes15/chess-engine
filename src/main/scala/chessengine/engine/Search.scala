@@ -3,12 +3,13 @@ package chessengine.engine
 import chessengine.domain.*
 import chessengine.logic.MoveGenerator.{allLegalMoves, isCheckmate, isStalemate}
 import ScoreType.*
+import SearchRes.*
 
 class Search(tt: TranspositionTable):
 
   private val CheckMateScore = 1000000
   private val CheckMateThreshold = 900000
-  private val StalemateScore = 0
+  private val StaleMateScore = 0
 
   /** Finds the best move for the current player using a Negamax search with
     * Alpha-Beta pruning and Transposition Table optimizations.
@@ -20,9 +21,14 @@ class Search(tt: TranspositionTable):
     * @return
     *   The best move found, or None if no legal moves exist.
     */
-  def bestMove(state: GameState, depth: Int): (Option[Move], Int) =
-    val (move, score) = minimax(state, 0, depth, -Int.MaxValue, Int.MaxValue)
-    (move, score)
+  def bestMove(state: GameState, depth: Int): SearchRes =
+    val (mv, score) = minimax(state, 0, depth, -Int.MaxValue, Int.MaxValue)
+    mv match
+      case Some(mv) => BestMove(mv, score)
+      case None
+          if (score > CheckMateThreshold && score < -CheckMateThreshold) =>
+        CheckMate
+      case None => StaleMate
 
   /** Recursive Negamax function with Alpha-Beta pruning and Transposition Table
     * integration.
@@ -76,7 +82,7 @@ class Search(tt: TranspositionTable):
 
       case _ if isStalemate(state) =>
         // Terminal node: stalemate. No move is possible.
-        (None, StalemateScore)
+        (None, StaleMateScore)
 
       case _ =>
         /** Iterates through moves and returns the best score and move found. */

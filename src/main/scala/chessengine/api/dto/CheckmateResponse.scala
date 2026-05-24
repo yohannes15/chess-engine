@@ -3,8 +3,8 @@ package chessengine.api.dto
 import chessengine.domain.Color
 import io.circe.Encoder
 
-final case class CheckmateResponse(winner: Color)
+final case class CheckMateResponse(winner: Color)
 
-object CheckmateResponse:
-  given checkmateResponseEncoder: Encoder[CheckmateResponse] =
+object CheckMateResponse:
+  given checkmateResponseEncoder: Encoder[CheckMateResponse] =
     Encoder.forProduct1("winner")(_.winner.toString.toLowerCase)

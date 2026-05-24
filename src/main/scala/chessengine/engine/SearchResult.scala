@@ -2,6 +2,6 @@ package chessengine.engine
 
 import chessengine.domain.Move
 
-enum SearchResult:
+enum SearchRes:
   case CheckMate, StaleMate
   case BestMove(move: Move, score: Int)
