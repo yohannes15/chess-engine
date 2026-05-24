@@ -68,10 +68,7 @@ class FenSuite extends munit.FunSuite:
 
   test("starting position has all castling rights") {
     val result = Fen.parse(startingFen).map(_.castlingRights)
-    assertEquals(
-      result,
-      Valid(CastlingRights(true, true, true, true))
-    )
+    assertEquals(result, Valid(CastlingRights(true, true, true, true)))
   }
 
   test("FEN with no castling rights parses") {
