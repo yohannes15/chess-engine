@@ -1,6 +1,8 @@
 package chessengine.engine
 
-import chessengine.domain.{Fen, GameState, NormalMove, Square, Piece, Color, Role}
+import chessengine.domain.{
+  Fen, GameState, NormalMove, Square, Piece, Color, Role
+}
 import chessengine.TestHelpers.startingFen
 
 class EvaluationSuite extends munit.FunSuite:
