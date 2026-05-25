@@ -18,17 +18,25 @@ object MoveGenerator:
       from
     ).filter(move => isLegal(state, move))
 
-  /** for attack detection primarily. You don't need to know if an opponent's
-    * move is legal (i.e. if it leaves their King in check) to know if they are
-    * attacking your King. If your king can be captured, you're in check!
-    * period.
-    */
+  /** Give me every possible move, ignoring whether it leaves king in check. */
   def pseudoLegalMovesFromSquare(state: GameState, from: Square): List[Move] =
     state.board.pieces(from.index) match
       case None        => List.empty[Move]
       case Some(piece) =>
         generateForPiece(state, from, piece)
 
+  /** Give me every attack move, ignoring whether it leaves king in check. */
+  def pseudoLegalAttacksFromSquare(state: GameState, from: Square): List[Move] =
+    state.board.pieces(from.index) match
+      case None        => List.empty[Move]
+      case Some(piece) => piece.role match
+          // Castling moves not included as they aren't attacks
+          case Role.King => Role.King.moveOffsets.flatMap(offset =>
+              generateLeaping(state, from, piece, offset)
+            )
+          case _ => generateForPiece(state, from, piece)
+
+  /** Generate moves according to this piece's movement rules */
   def generateForPiece(
       state: GameState,
       from: Square,
@@ -223,8 +231,8 @@ object MoveGenerator:
       }
 
   /** To know if a square is attacked by a color C. There are 2 ways
-    *   - A) Generate all pseudo-legal moves for every `C` color piece and see
-    *     if any of them land on the square.
+    *   - A) Generate all pseudo-legal attack moves for every `C` color piece
+    *     and see if any of them land on the square.
     *   - B) TODO: Look outward from square.
     *     - If you look N, and see a C color Rook/Queen, its attacked.
     *     - If you look like a Knight and see a C color knight, its attacked.
@@ -236,7 +244,7 @@ object MoveGenerator:
   ): Boolean =
     state.board.pieces.zipWithIndex.exists {
       case (Some(piece), idx) if piece.color == attackerColor =>
-        pseudoLegalMovesFromSquare(state, Square.fromInt(idx).get)
+        pseudoLegalAttacksFromSquare(state, Square.fromInt(idx).get)
           .exists(_.to.index == square.index)
       case _ => false
     }
