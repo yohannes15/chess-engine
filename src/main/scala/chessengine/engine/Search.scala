@@ -71,11 +71,6 @@ class Search(tt: TranspositionTable):
           }) =>
         (Some(entry.bestMove), scoreFromTT(entry.score, ply))
 
-      case (_, 0) =>
-        // Leaf node: return static evaluation. No move is returned because
-        // we didn't search any moves from this position.
-        (None, Evaluation(state).score)
-
       case _ if isCheckmate(state) =>
         // Terminal node: checkmate. No move is possible.
         (None, -CheckMateScore + ply)
@@ -83,6 +78,11 @@ class Search(tt: TranspositionTable):
       case _ if isStalemate(state) =>
         // Terminal node: stalemate. No move is possible.
         (None, StaleMateScore)
+
+      case (_, 0) =>
+        // Leaf node: return static evaluation. No move is returned because
+        // we didn't search any moves from this position.
+        (None, Evaluation(state).score)
 
       case _ =>
         /** Iterates through moves and returns the best score and move found. */
