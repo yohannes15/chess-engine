@@ -69,12 +69,11 @@ src/test/scala/chessengine/
 
 | Priority | What | Status |
 |---|---|---|
-| 1 | CI pipeline (GitHub Actions) | Planned |
-| 2 | GET /fen endpoint | Planned |
-| 3 | PGN parser | Planned |
-| 4 | Real-time multiplayer (WebSockets, FS2, concurrent game state) | Planned |
-| 5 | Frontend (visual board, move input) | Planned |
-| 6 | Bitboard optimization | Planned |
+| 1 | GET /fen endpoint | Planned |
+| 2 | PGN parser | Planned |
+| 3 | Real-time multiplayer (WebSockets, FS2, concurrent game state) | Planned |
+| 4 | Frontend (visual board, move input) | Planned |
+| 5 | Bitboard optimization | Planned |
 
 ## License
 
