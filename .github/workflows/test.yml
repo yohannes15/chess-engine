@@ -1,4 +1,4 @@
-name: CI
+name: Sbt Test & Assemble
 on:
   pull_request:
     branches: [main]
