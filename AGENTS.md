@@ -20,7 +20,7 @@ sbt ~reStart         # hot-reload the HTTP server (sbt-revolver)
 sbt assembly         # fat JAR (uses MergeStrategy.discard for module-info.class)
 ```
 
-No CI pipeline is configured yet.
+CI runs via GitHub Actions (`on: pull_request` against `main`).
 
 ## Key directories
 
