@@ -107,9 +107,11 @@ object PGN:
         val destStr = rest.takeRight(2)
         val disambig = rest.dropRight(2)
 
-        Square.fromNotation(
+        val destSq = Square.fromNotation(
           destStr
-        ).toRight(s"Invalid square '$destStr' in: $san").flatMap { dest =>
+        ).toRight(s"Invalid square '$destStr' in: $san")
+
+        destSq.flatMap { dest =>
           val fileDisambig = disambig.find(c => c.isLetter && c.isLower)
           val rankDisambig = disambig.find(_.isDigit)
 
@@ -128,7 +130,8 @@ object PGN:
           candidates match
             case single :: Nil => Right(single)
             case Nil           => Left(s"Illegal or no matching move: $san")
-            case _ => Left(s"Ambiguous SAN (${candidates.size} matches): $san")
+            case _             =>
+              Left(s"Ambiguous SAN (${candidates.size} matches): $san")
         }
 
   /** Minimal disambiguation prefix (file, rank, or both) needed to uniquely
