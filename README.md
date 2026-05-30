@@ -69,10 +69,9 @@ src/test/scala/chessengine/
 
 | Priority | What | Status |
 |---|---|---|
-| 1 | PGN parser | Planned |
-| 2 | Multiplayer backend (GameRegistry over Ref/Deferred, WebSockets via FS2, game clock) | Planned |
-| 3 | Frontend (visual board) | Planned |
-| 4 | Bitboard optimization | Planned |
+| 1 | Multiplayer backend (GameRegistry over Ref/Deferred, WebSockets via FS2, game clock) | Planned |
+| 2 | Frontend (visual board) | Planned |
+| 3 | Bitboard optimization | Planned |
 
 ## License
 
