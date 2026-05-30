@@ -20,6 +20,14 @@ enum Role:
       case Queen  => "q"
       case _      => ""
 
+  def toSanChar: Char = this match
+    case King   => 'K'
+    case Queen  => 'Q'
+    case Rook   => 'R'
+    case Bishop => 'B'
+    case Knight => 'N'
+    case Pawn   => 'P'
+
   def isSliding: Boolean = this match
     case Rook | Bishop | Queen => true
     case _                     => false
@@ -80,3 +88,12 @@ object Role:
       case 'r' => Rook
       case 'q' => Queen
       case 'k' => King
+
+  def fromSanChar(c: Char): Option[Role] =
+    c match
+      case 'K' => Some(King)
+      case 'Q' => Some(Queen)
+      case 'R' => Some(Rook)
+      case 'B' => Some(Bishop)
+      case 'N' => Some(Knight)
+      case _   => None
