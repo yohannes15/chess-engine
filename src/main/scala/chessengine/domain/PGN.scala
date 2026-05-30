@@ -2,7 +2,7 @@ package chessengine.domain
 
 import cats.data.ValidatedNec
 import cats.syntax.all.*
-import chessengine.logic.MoveGenerator
+import chessengine.logic.MoveGenerator.{allLegalMoves, isSquareAttacked}
 
 object PGN:
   private val tagsRegex = raw"""\[(\w+)\s*"([^"]*)"\]""".r
@@ -19,44 +19,33 @@ object PGN:
       val (tagsStr, movesStr) = sOneLine.splitAt(tagEnding + 1)
       (parseTags(tagsStr), parseMoves(movesStr)).mapN(PGNGame.apply)
 
-  /** Encode a move as SAN given the pre-move state. Appends `+` for check or
-    * `#` for checkmate based on the resulting position.
-    */
+  /** Encode a move as SAN given the pre-move state */
   def toSAN(move: Move, state: GameState): String =
+
+    def baseStr(m: Move): String =
+      val pc = if m.piece.role == Role.Pawn then "" else m.piece.role.toSanChar
+      val disambig = disambiguate(state, m)
+      val captureX = if m.capture.isDefined then "x" else ""
+      val dest = m.to.toNotation
+      s"$pc$disambig$captureX$dest"
+
     val base = move match
-      case m: CastlingMove =>
-        if m.to.file == 6 then "O-O" else "O-O-O"
-
-      case m: PromotionMove =>
-        val piecePfx = if m.piece.role == Role.Pawn then ""
-        else m.piece.role.toSanChar.toString
-        val disambig = disambiguate(state, m)
-        val captureX = if m.capture.isDefined then "x" else ""
-        val dest = m.to.toNotation
-        val promoRole = m.promotion.toSanChar.toUpper
-        s"$piecePfx$disambig$captureX$dest=$promoRole"
-
-      case m =>
-        val piecePfx = if m.piece.role == Role.Pawn then ""
-        else m.piece.role.toSanChar.toString
-        val disambig = disambiguate(state, m)
-        val captureX = if m.capture.isDefined then "x" else ""
-        val dest = m.to.toNotation
-        s"$piecePfx$disambig$captureX$dest"
+      case m: CastlingMove  => if m.to.file == 6 then "O-O" else "O-O-O"
+      case m: PromotionMove => s"${baseStr(m)}=${m.promotion.toSanChar}"
+      case m                => baseStr(m)
 
     val nextState = state.applyMove(move)
     val kingSq = nextState.board.findPiece(nextState.color, Role.King)
     val inCheck = kingSq.exists(sq =>
-      MoveGenerator.isSquareAttacked(nextState, sq, nextState.color.opposite)
+      isSquareAttacked(nextState, sq, nextState.color.opposite)
     )
-    val suffix =
-      if inCheck then
-        if MoveGenerator.allLegalMoves(nextState).isEmpty then "#" else "+"
-      else ""
+    val suffix = if !inCheck then ""
+    else
+      val isEmpty = allLegalMoves(nextState).isEmpty
+      if isEmpty then "#" else "+"
 
     base + suffix
 
-  /** Extract `[Key "Value"]` pairs. Fails if no valid tags are found. */
   private def parseTags(s: String): ValidatedNec[String, Map[String, String]] =
     tagsRegex.findAllMatchIn(s).map(m => m.group(1) -> m.group(2)).toMap match
       case m if m.nonEmpty => m.valid
@@ -66,20 +55,18 @@ object PGN:
     * [[GameState]]. Fails fast on the first unresolvable token.
     */
   private def parseMoves(s: String): ValidatedNec[String, List[Move]] =
-    val tokens = s.split("\\s+").map(_.trim)
-      .filterNot(t =>
-        t.isEmpty || moveNumRegex.matches(t) || resultTokens.contains(t)
-      )
-      .toList
+    val tokens = s.split("\\s+").map(_.trim).filterNot(t =>
+      t.isEmpty || moveNumRegex.matches(t) || resultTokens.contains(t)
+    ).toList
 
     tokens.foldLeft[Either[String, (GameState, List[Move])]](
       Right((GameState.initial, List.empty[Move]))
     ) {
       case (Right((state, acc)), token) =>
         val move = resolveSAN(token, state)
-        move.map(mv => (state.applyMove(mv), acc :+ mv))
+        move.map(mv => (state.applyMove(mv), mv :: acc))
       case (err, _) => err
-    }.map(_._2).toValidatedNec
+    }.map(_._2.reverse).toValidatedNec
 
   /** Resolve a SAN token to a [[Move]] in the given position. Handles castling,
     * promotion, file/rank disambiguation, and annotation suffixes (`+`, `#`,
@@ -89,11 +76,11 @@ object PGN:
     val stripped = san.replaceAll(stripSuffixes, "")
 
     if stripped == "O-O-O" then
-      MoveGenerator.allLegalMoves(state)
+      allLegalMoves(state)
         .collectFirst { case m: CastlingMove if m.to.file == 2 => m }
         .toRight(s"Queenside castling unavailable: $san")
     else if stripped == "O-O" then
-      MoveGenerator.allLegalMoves(state)
+      allLegalMoves(state)
         .collectFirst { case m: CastlingMove if m.to.file == 6 => m }
         .toRight(s"Kingside castling unavailable: $san")
     else
@@ -126,7 +113,7 @@ object PGN:
           val fileDisambig = disambig.find(c => c.isLetter && c.isLower)
           val rankDisambig = disambig.find(_.isDigit)
 
-          val candidates = MoveGenerator.allLegalMoves(state).filter { m =>
+          val candidates = allLegalMoves(state).filter { m =>
             m.piece.role == role &&
             m.to == dest &&
             fileDisambig.forall(f => m.from.file == f - 'a') &&
@@ -144,12 +131,11 @@ object PGN:
             case _ => Left(s"Ambiguous SAN (${candidates.size} matches): $san")
         }
 
-  /** Returns the minimal disambiguation prefix (file, rank, or both) needed to
-    * uniquely identify `move.from` among all legal moves reaching the same
-    * square.
+  /** Minimal disambiguation prefix (file, rank, or both) needed to uniquely
+    * identify `move.from` among all legal moves reaching the same square.
     */
   private def disambiguate(state: GameState, move: Move): String =
-    val rivals = MoveGenerator.allLegalMoves(state).filter { m =>
+    val rivals = allLegalMoves(state).filter { m =>
       m.piece.role == move.piece.role &&
       m.to == move.to &&
       m.from != move.from
