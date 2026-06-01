@@ -6,10 +6,12 @@ import java.util.UUID
 import chessengine.domain.{GameState, Move}
 
 final class GameRegistry private (registry: Ref[IO, Map[UUID, GameState]]):
-  def create(gameId: UUID = UUID.randomUUID()): IO[UUID] =
-    registry.modify(games =>
-      (games.updated(gameId, GameState.initial), gameId)
-    )
+  def create: IO[(UUID, GameState)] =
+    registry.modify { games =>
+      val id = UUID.randomUUID()
+      val gs = GameState.initial
+      (games.updated(id, gs), (id, gs))
+    }
 
   def lookup(gameId: UUID): IO[Option[GameState]] =
     registry.get.map(_.get(gameId))
