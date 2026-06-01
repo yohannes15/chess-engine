@@ -11,7 +11,7 @@ lazy val root = (project in file("."))
     organization := "chessengine",
     name := "chessengine",
     version := "0.0.1",
-    scalaVersion := "3.8.2",
+    scalaVersion := "3.8.3",
     libraryDependencies ++= Seq(
       "org.http4s"      %% "http4s-ember-server" % Http4sVersion,
       "org.http4s"      %% "http4s-ember-client" % Http4sVersion,
