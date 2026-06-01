@@ -1,5 +1,7 @@
 package chessengine.engine
 
+import java.util.concurrent.atomic.AtomicReferenceArray
+
 /** A high-performance cache for search results, using a Dual-Bucket strategy to
   * balance search depth and recency. The table is implemented as a fixed-size
   * array of [[TTEntry]], where each logical "bucket" contains 2 idx slots:
@@ -11,7 +13,8 @@ package chessengine.engine
   *   The total number of slots in the underlying array. Must be a power of 2.
   */
 class TranspositionTable private (val size: Int):
-  private val table: Array[TTEntry] = new Array[TTEntry](size)
+  private val table: AtomicReferenceArray[TTEntry] =
+    new AtomicReferenceArray[TTEntry](size)
   private final val BUCKETS: Int = size / 2
 
   /** Maps 64-bit Zobrist hash to a pair of array indices (depthIdx, recentIdx).
@@ -34,11 +37,11 @@ class TranspositionTable private (val size: Int):
 
   def depthLookup(hash: Long): Option[TTEntry] =
     val (depthIndex, _) = index(hash)
-    Option(table(depthIndex)).filter(_.hash == hash)
+    Option(table.get(depthIndex)).filter(_.hash == hash)
 
   def recentLookup(hash: Long): Option[TTEntry] =
     val (_, recentIndex) = index(hash)
-    Option(table(recentIndex)).filter(_.hash == hash)
+    Option(table.get(recentIndex)).filter(_.hash == hash)
 
   /** Stores a search result in the table. This method always updates the
     * Recent-Replace slot. It only updates the Depth-Preferred slot if the new
@@ -46,10 +49,10 @@ class TranspositionTable private (val size: Int):
     */
   def store(entry: TTEntry): Unit =
     val (depthIndex, recentIndex) = index(entry.hash)
-    table.update(recentIndex, entry)
+    table.set(recentIndex, entry)
     val replaceDepth =
-      Option(table(depthIndex)).forall(past => entry.depth >= past.depth)
-    if replaceDepth then table.update(depthIndex, entry)
+      Option(table.get(depthIndex)).forall(past => entry.depth >= past.depth)
+    if replaceDepth then table.set(depthIndex, entry)
 
 object TranspositionTable:
   /** Creates a new TranspositionTable with a size optimized for memory budget.

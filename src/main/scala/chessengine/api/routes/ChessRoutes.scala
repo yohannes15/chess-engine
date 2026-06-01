@@ -17,47 +17,46 @@ import chessengine.api.dto.{
 import chessengine.engine.SearchRes.*
 import chessengine.logic.MoveGenerator.allLegalMoves
 
-private[api] class ChessRoutes(val search: Search):
-  def routes: HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case GET -> Root / "health"         => Ok("Healthy!")
-      case r @ POST -> Root / "best-move" =>
-        for
-          request <- r.as[BestMoveRequest]
-          response <- Fen.parse(request.fen).fold(
-            errors =>
-              BadRequest(body =
-                Json.obj(
-                  "message" -> Json.fromString("invalid fen string"),
-                  "errors" -> Json.arr(errors.toList.asJson)
-                )
-              ),
-            state =>
-              search.bestMove(state, request.depth) match
-                case BestMove(mv, score) => Ok(BestMoveResponse(mv, score))
-                case CheckMate => Ok(CheckMateResponse(state.color.opposite))
-                case StaleMate => Ok(StaleMateResponse())
-          )
-        yield (response)
-
-      case r @ POST -> Root / "validate-move" =>
-        for
-          request <- r.as[ValidateMoveRequest]
-          response <- Fen.parse(request.fen).fold(
-            errors =>
-              BadRequest(body =
-                Json.obj(
-                  "message" -> Json.fromString("invalid fen string"),
-                  "errors" -> Json.arr(errors.toList.asJson)
-                )
-              ),
-            state =>
-              Ok(
-                ValidateMoveResponse(valid =
-                  allLegalMoves(state).exists(_.toUCI ==
-                    request.move.toLowerCase)
-                )
+private[api] class ChessRoutes(search: Search):
+  def routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
+    case GET -> Root / "health"         => Ok("Healthy!")
+    case r @ POST -> Root / "best-move" =>
+      for
+        request <- r.as[BestMoveRequest]
+        response <- Fen.parse(request.fen).fold(
+          errors =>
+            BadRequest(body =
+              Json.obj(
+                "message" -> Json.fromString("invalid fen string"),
+                "errors" -> Json.arr(errors.toList.asJson)
               )
-          )
-        yield (response)
-    }
+            ),
+          state =>
+            search.bestMove(state, request.depth) match
+              case BestMove(mv, score) => Ok(BestMoveResponse(mv, score))
+              case CheckMate => Ok(CheckMateResponse(state.color.opposite))
+              case StaleMate => Ok(StaleMateResponse())
+        )
+      yield (response)
+
+    case r @ POST -> Root / "validate-move" =>
+      for
+        request <- r.as[ValidateMoveRequest]
+        response <- Fen.parse(request.fen).fold(
+          errors =>
+            BadRequest(body =
+              Json.obj(
+                "message" -> Json.fromString("invalid fen string"),
+                "errors" -> Json.arr(errors.toList.asJson)
+              )
+            ),
+          state =>
+            Ok(
+              ValidateMoveResponse(valid =
+                allLegalMoves(state).exists(_.toUCI ==
+                  request.move.toLowerCase)
+              )
+            )
+        )
+      yield (response)
+  }
