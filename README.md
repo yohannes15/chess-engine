@@ -17,7 +17,9 @@ Core engine is complete and tested:
 - **Search** — negamax with alpha-beta pruning, transposition table, Zobrist hashing
 - **Evaluation** — material counting + piece-square tables
 - **HTTP API** — health check, best-move suggestion, move validation
-- **Tests** — 218 tests across 7 suites, all passing
+- **Multiplayer backend** — GameRegistry with game creation, state lookup, move application
+- **PGN parser** — tag parser, SAN resolver with disambiguation, SAN encoder
+- **Tests** — 254 tests across 8 suites, all passing
 
 ## Quick start
 
@@ -47,13 +49,15 @@ src/main/scala/chessengine/
 ├── logic/        MoveGenerator — pseudo-legal + legal move generation, check/stalemate detection
 ├── engine/       Search (negamax + alpha-beta), Evaluation (material + PST),
 │                 TranspositionTable, Zobrist hashing, Score, TTEntry
-└── api/          Http4s server (port 8080), routes (health, best-move, validate-move), DTOs
+├── game/         GameRegistry — Ref-backed multiplayer game state
+└── api/          Http4s server (port 8080), routes (health, best-move, validate-move,
+                  game create/lookup/move), DTOs
 
 src/test/scala/chessengine/
-├── domain/       SquareSuite (139), FenSuite (17), BoardSuite (9), GameStateSuite (23)
+├── domain/       SquareSuite (139), FenSuite (23), BoardSuite (9), GameStateSuite (23)
 ├── logic/        MoveGeneratorSuite (14) — perft tests
 ├── engine/       SearchSuite (4), EvaluationSuite (6)
-└── api/          ChessRoutesSuite (7)
+└── api/          ChessRoutesSuite (8), GameRoutesSuite (2)
 ```
 
 ## Architecture notes
@@ -64,14 +68,15 @@ src/test/scala/chessengine/
 - `TranspositionTable` is a fixed-size array with a dual-bucket strategy (depth-preferred + recent-replace per bucket). Size must be a power of 2.
 - `Search` uses negamax with alpha-beta pruning. Checkmate scores are ply-adjusted before TT storage.
 - `MoveGenerator.isLegal` applies the move then checks if the moving player's king is attacked.
+- `GameRegistry` wraps a `Ref[IO, Map[UUID, GameState]]` for thread-safe multiplayer game storage.
 
 ## Roadmap
 
 | Priority | What | Status |
 |---|---|---|
-| 1 | Multiplayer backend (GameRegistry over Ref/Deferred, WebSockets via FS2, game clock) | Planned |
-| 2 | Frontend (visual board) | Planned |
-| 3 | Bitboard optimization | Planned |
+| — | Multiplayer backend (GameRegistry, game routes, PGN parser, Fen.write) | Done |
+| 1 | Frontend (visual board, WebSockets via FS2, game clock) | Next |
+| 2 | Bitboard optimization | Later |
 
 ## License
 
