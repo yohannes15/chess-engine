@@ -102,3 +102,38 @@ class FenSuite extends munit.FunSuite:
       Fen.parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -").isValid
     )
   }
+
+  private def roundTrips(fen: String): Unit =
+    assertEquals(Fen.parse(fen).map(Fen.write), Valid(fen))
+
+  test("write starting position matches starting FEN") {
+    roundTrips(startingFen)
+  }
+
+  test("write no-castling position round-trips") {
+    roundTrips("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1")
+  }
+
+  test("write en-passant + black-to-move round-trips") {
+    roundTrips("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1")
+  }
+
+  test("write empty board round-trips") {
+    roundTrips("8/8/8/8/8/8/8/8 w - - 0 1")
+  }
+
+  test("write position with scattered pieces round-trips") {
+    roundTrips("r3k2r/pp6/8/8/8/8/PP6/R3K2R w KQkq - 0 1")
+  }
+
+  test("write single-piece positions round-trips") {
+    roundTrips("8/8/8/4k3/8/8/8/8 w - - 0 1")
+  }
+
+  test("write 4-field parsed FEN includes default move counters") {
+    val fourField = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -"
+    assertEquals(
+      Fen.parse(fourField).map(Fen.write),
+      Valid("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+    )
+  }

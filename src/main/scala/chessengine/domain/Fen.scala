@@ -42,11 +42,17 @@ object Fen:
         )
 
   def write(state: GameState): String =
-    ???
+    val boardStr = (7 to 0 by -1).map(encodeRank(state.board, _)).mkString("/")
+    val side = state.color match
+      case Color.White => "w"
+      case Color.Black => "b"
+    val castling = encodeCastling(state.castlingRights)
+    val enPassant = state.enPassantSquare.fold("-")(_.toNotation)
+    s"$boardStr $side $castling $enPassant 0 1"
 
-  /** 8 ranks, from rank 8 to rank 1. Digits 1-8 represent empty squares.
-    * Example: [rnbqkbnr, pppppppp, 8, 8, 8, 8, PPPPPPPP, RNBQKBNR]
-    */
+    /** 8 ranks, from rank 8 to rank 1. Digits 1-8 represent empty squares.
+      * Example: [rnbqkbnr, pppppppp, 8, 8, 8, 8, PPPPPPPP, RNBQKBNR]
+      */
   private def parseBoard(pieces: List[String]): ValidatedNec[String, Board] =
     pieces.reverse.traverse(parseRank).map(ranks =>
       Board(ranks.flatten.toVector)
@@ -110,3 +116,23 @@ object Fen:
           chars.contains('k'),
           chars.contains('q')
         ).validNec
+
+  private def encodeRank(board: Board, rank: Int): String =
+    val (str, trailing) = (0 to 7).foldLeft(("", 0)) {
+      case ((acc, empty), file) =>
+        board.pieces(rank * 8 + file) match
+          case Some(piece) =>
+            val flushed = if empty > 0 then s"$acc$empty" else acc
+            (s"$flushed${piece.toFenChar}", 0)
+          case None => (acc, empty + 1)
+    }
+    if trailing > 0 then s"$str$trailing" else str
+
+  private def encodeCastling(rights: CastlingRights): String =
+    val s = List(
+      Option.when(rights.whiteKingSide)('K'),
+      Option.when(rights.whiteQueenSide)('Q'),
+      Option.when(rights.blackKingSide)('k'),
+      Option.when(rights.blackQueenSide)('q')
+    ).flatten.mkString
+    if s.isEmpty then "-" else s
