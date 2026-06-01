@@ -1,10 +1,11 @@
-package chessengine.domain
+package chessengine.game
 
 import cats.effect.kernel.Ref
 import cats.effect.IO
 import java.util.UUID
+import chessengine.domain.{GameState, Move}
 
-private class GameRegistry(registry: Ref[IO, Map[UUID, GameState]]):
+class GameRegistry(registry: Ref[IO, Map[UUID, GameState]]):
   def create(gameId: UUID = UUID.randomUUID()): IO[UUID] =
     registry.modify(games =>
       (games.updated(gameId, GameState.initial), gameId)
