@@ -9,17 +9,17 @@ import scala.util.Random
 object Zobrist:
   private val random = Random(42)
 
-  val pieceTable = Vector.fill(64, 12)(random.nextLong)
+  val pieceTable = Vector.fill(64, 12)(random.nextLong())
 
   /** sideToMove represents Black's turn. Initialized to 0L for White, and XORed
     * with this value to toggle to Black. XORing again toggles back to White
     * (0L).
     */
-  val sideToMove = random.nextLong
+  val sideToMove = random.nextLong()
   // all combinations of the 4 castling rights (2 * 2 * 2 * 2)
-  val castlingTable = Vector.fill(16)(random.nextLong)
+  val castlingTable = Vector.fill(16)(random.nextLong())
   // Only the file matters for EnPassant (8 files)
-  val enPassantTable = Vector.fill(8)(random.nextLong)
+  val enPassantTable = Vector.fill(8)(random.nextLong())
 
   /** Get a unique value between 0 and 11 for a piece */
   def pieceIndex(p: Piece): Int =
