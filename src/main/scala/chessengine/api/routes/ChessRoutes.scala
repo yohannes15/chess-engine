@@ -17,7 +17,7 @@ import chessengine.api.dto.{
 import chessengine.engine.SearchRes.*
 import chessengine.logic.MoveGenerator.allLegalMoves
 
-private[api] class ChessRoutes(val search: Search):
+private[api] class ChessRoutes(search: Search):
   def routes: HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case GET -> Root / "health"         => Ok("Healthy!")
