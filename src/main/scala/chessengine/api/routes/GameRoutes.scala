@@ -9,11 +9,11 @@ import org.http4s.dsl.io.*
 import cats.effect.IO
 import org.http4s.circe.CirceEntityEncoder.circeEntityEncoder
 
-private[api] class GameRoutes(gameReg: GameRegistry):
+private[api] class GameRoutes(reg: GameRegistry):
   def routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
     case POST -> Root / "games" =>
       for
-        (uuid, state) <- gameReg.create
+        (uuid, state) <- reg.create
         response <- Ok(NewGameResponse(uuid, Fen.write(state)))
       yield response
   }
