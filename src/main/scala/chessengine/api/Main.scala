@@ -17,7 +17,7 @@ object Main extends IOApp.Simple:
     for
       _ <- IO.println("Starting Chess API ...")
       tt <- IO(TTable(250))
-      gameRegistry <- GameRegistry.create
+      gameRegistry <- GameRegistry.initial
       app: HttpApp[IO] = (
         ChessRoutes(Search(tt)).routes.orNotFound <+>
           GameRoutes(gameRegistry).routes.orNotFound

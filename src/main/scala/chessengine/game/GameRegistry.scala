@@ -26,5 +26,5 @@ final class GameRegistry private (registry: Ref[IO, Map[UUID, GameState]]):
     }
 
 object GameRegistry:
-  def create: IO[GameRegistry] =
+  def initial: IO[GameRegistry] =
     Ref.of[IO, Map[UUID, GameState]](Map.empty).map(ref => GameRegistry(ref))
