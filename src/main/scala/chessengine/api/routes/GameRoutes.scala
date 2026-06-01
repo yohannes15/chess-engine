@@ -14,19 +14,21 @@ import chessengine.logic.MoveGenerator.*
 import chessengine.api.dto.MoveRequest
 import java.util.UUID
 import org.http4s.Response
-import chessengine.domain.Move
+import chessengine.domain.{GameState, Move}
 
 private[api] class GameRoutes(reg: GameRegistry):
 
   private def handleMove(id: UUID, mv: Move): IO[Response[IO]] =
     reg.applyMove(id, mv).flatMap:
       case None       => NotFound("invalid game uuid")
-      case Some(next) =>
-        Ok(GameStateResponse(
-          fen = Fen.write(next),
-          turn = next.color.toString,
-          legalMoves = allLegalMoves(next).map(_.toUCI)
-        ))
+      case Some(next) => Ok(gameStateResponse(next))
+
+  private def gameStateResponse(gs: GameState): GameStateResponse =
+    GameStateResponse(
+      fen = Fen.write(gs),
+      turn = gs.color.toString,
+      legalMoves = allLegalMoves(gs).map(_.toUCI)
+    )
 
   def routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
     case POST -> Root / "games" =>
@@ -39,13 +41,8 @@ private[api] class GameRoutes(reg: GameRegistry):
       for
         gameState <- reg.lookup(id)
         response <- gameState match
-          case Some(gs) =>
-            Ok(GameStateResponse(
-              fen = Fen.write(gs),
-              turn = gs.color.toString,
-              legalMoves = allLegalMoves(gs).map(_.toUCI)
-            ))
-          case None => NotFound("invalid game uuid")
+          case Some(gs) => Ok(gameStateResponse(gs))
+          case None     => NotFound("invalid game uuid")
       yield response
 
     case req @ POST -> Root / "games" / UUIDVar(id) / "move" =>
