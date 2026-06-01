@@ -19,9 +19,8 @@ object Main extends IOApp.Simple:
       tt <- IO(TTable(250))
       gameRegistry <- GameRegistry.initial
       app: HttpApp[IO] = (
-        ChessRoutes(Search(tt)).routes.orNotFound <+>
-          GameRoutes(gameRegistry).routes.orNotFound
-      )
+        ChessRoutes(Search(tt)).routes <+> GameRoutes(gameRegistry).routes
+      ).orNotFound
       _ <- EmberServerBuilder
         .default[IO]
         .withHost(ipv4"0.0.0.0")
