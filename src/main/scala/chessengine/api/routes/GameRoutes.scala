@@ -19,9 +19,10 @@ import chessengine.domain.{GameState, Move}
 private[api] class GameRoutes(reg: GameRegistry):
 
   private def handleMove(id: UUID, mv: Move): IO[Response[IO]] =
-    reg.applyMove(id, mv).flatMap:
+    reg.applyMove(id, mv).flatMap {
       case None       => NotFound("invalid game uuid")
       case Some(next) => Ok(gameStateResponse(next))
+    }
 
   private def gameStateResponse(gs: GameState): GameStateResponse =
     GameStateResponse(
