@@ -31,10 +31,7 @@ private[api] class GameRoutes(reg: GameRegistry):
               legalMoves = MoveGenerator.allLegalMoves(gs).map(mv => mv.toUCI)
             ))
           case None => BadRequest(
-              Json.obj(
-                "message" -> Json.fromString("id: UUID not valid"),
-                "errors" -> Json.arr()
-              )
+              Json.obj("message" -> Json.fromString("invalid game uuid"))
             )
-      yield ???
+      yield response
   }
