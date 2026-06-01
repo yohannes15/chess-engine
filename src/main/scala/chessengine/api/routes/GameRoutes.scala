@@ -1,14 +1,19 @@
 package chessengine.api.routes
 
 import chessengine.game.GameRegistry
+import chessengine.api.dto.NewGameResponse
+import chessengine.domain.Fen
 
 import org.http4s.HttpRoutes
 import org.http4s.dsl.io.*
 import cats.effect.IO
+import org.http4s.circe.CirceEntityEncoder.circeEntityEncoder
 
-private[api] class GameRoutes(registry: GameRegistry):
+private[api] class GameRoutes(gameReg: GameRegistry):
   def routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
-    case GET -> Root / "games" =>
-      println(registry.toString)
-      ???
+    case POST -> Root / "games" =>
+      for
+        (uuid, state) <- gameReg.create
+        response <- Ok(NewGameResponse(uuid, Fen.write(state)))
+      yield response
   }
