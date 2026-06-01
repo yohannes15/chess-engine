@@ -10,9 +10,6 @@ import chessengine.engine.TranspositionTable as TTable
 import org.http4s.HttpApp
 import chessengine.api.routes.ChessRoutes
 import chessengine.api.routes.GameRoutes
-import cats.effect.kernel.Ref
-import java.util.UUID
-import chessengine.domain.GameState
 import chessengine.game.GameRegistry
 
 object Main extends IOApp.Simple:
@@ -20,10 +17,10 @@ object Main extends IOApp.Simple:
     for
       _ <- IO.println("Starting Chess API ...")
       tt <- IO(TTable(250))
-      regRef <- Ref.of[IO, Map[UUID, GameState]](Map.empty)
+      gameRegistry <- GameRegistry.create
       app: HttpApp[IO] = (
         ChessRoutes(Search(tt)).routes.orNotFound <+>
-          GameRoutes(GameRegistry(regRef)).routes.orNotFound
+          GameRoutes(gameRegistry).routes.orNotFound
       )
       _ <- EmberServerBuilder
         .default[IO]

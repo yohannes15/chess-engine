@@ -5,7 +5,7 @@ import cats.effect.IO
 import java.util.UUID
 import chessengine.domain.{GameState, Move}
 
-class GameRegistry(registry: Ref[IO, Map[UUID, GameState]]):
+final class GameRegistry private (registry: Ref[IO, Map[UUID, GameState]]):
   def create(gameId: UUID = UUID.randomUUID()): IO[UUID] =
     registry.modify(games =>
       (games.updated(gameId, GameState.initial), gameId)
@@ -22,3 +22,7 @@ class GameRegistry(registry: Ref[IO, Map[UUID, GameState]]):
           (games.updated(gameId, nextGS), Some(nextGS))
         case None => (games, None)
     }
+
+object GameRegistry:
+  def create: IO[GameRegistry] =
+    Ref.of[IO, Map[UUID, GameState]](Map.empty).map(ref => GameRegistry(ref))
