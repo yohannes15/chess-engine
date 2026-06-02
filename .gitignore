@@ -39,5 +39,6 @@ Thumbs.db
 NOTES/
 .omo/
 AGENTS.md
+opencode.json
 .opencode/
 .devcontainer/devcontainer-lock.json
