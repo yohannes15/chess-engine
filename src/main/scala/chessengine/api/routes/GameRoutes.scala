@@ -48,9 +48,9 @@ private[api] class GameRoutes(reg: GameRegistry):
 
     case req @ POST -> Root / "games" / UUIDVar(id) / "move" =>
       for
-        mvReq     <- req.as[MoveRequest]
+        mvReq <- req.as[MoveRequest]
         gameState <- reg.lookup(id)
-        response  <- gameState match
+        response <- gameState match
           case None     => NotFound(ErrorResponse("invalid game uuid"))
           case Some(gs) =>
             allLegalMoves(gs).find(_.toUCI == mvReq.move.toLowerCase) match

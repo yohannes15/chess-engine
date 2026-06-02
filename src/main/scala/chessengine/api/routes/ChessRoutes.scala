@@ -22,12 +22,13 @@ private[api] class ChessRoutes(search: Search):
       for
         request <- r.as[BestMoveRequest]
         response <- Fen.parse(request.fen).fold(
-          errors => BadRequest(ErrorResponse("invalid fen string", errors.toList)),
+          errors =>
+            BadRequest(ErrorResponse("invalid fen string", errors.toList)),
           state =>
             search.bestMove(state, request.depth) match
               case BestMove(mv, score) => Ok(BestMoveResponse(mv, score))
-              case CheckMate           => Ok(CheckMateResponse(state.color.opposite))
-              case StaleMate           => Ok(StaleMateResponse())
+              case CheckMate => Ok(CheckMateResponse(state.color.opposite))
+              case StaleMate => Ok(StaleMateResponse())
         )
       yield (response)
 
@@ -35,9 +36,11 @@ private[api] class ChessRoutes(search: Search):
       for
         request <- r.as[ValidateMoveRequest]
         response <- Fen.parse(request.fen).fold(
-          errors => BadRequest(ErrorResponse("invalid fen string", errors.toList)),
+          errors =>
+            BadRequest(ErrorResponse("invalid fen string", errors.toList)),
           state =>
-            Ok(ValidateMoveResponse(allLegalMoves(state).exists(_.toUCI == request.move.toLowerCase)))
+            Ok(ValidateMoveResponse(allLegalMoves(state).exists(_.toUCI ==
+              request.move.toLowerCase)))
         )
       yield (response)
   }
