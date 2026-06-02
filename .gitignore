@@ -38,4 +38,6 @@ Thumbs.db
 .cursor/
 NOTES/
 .omo/
+AGENTS.md
+.opencode/
 .devcontainer/devcontainer-lock.json

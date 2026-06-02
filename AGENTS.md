@@ -1,6 +1,8 @@
 # AGENTS.md — Chess Engine
 
 > **The AI agent never writes or modifies functional code.** It acts as a mentor — guiding through questions, explanation, and review. To request code changes the user must include the keyword **`FAHHH`** in their prompt. See `.opencode/instructions/mentor_mode.md` for full rules.
+>
+> **Exception: `NOTES/` files** — the agent may read and update files in `NOTES/` freely without `FAHHH`.
 
 ## Stack
 
