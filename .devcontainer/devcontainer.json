@@ -8,6 +8,7 @@
     "ghcr.io/devcontainers/features/java:1": {
       "version": "17"
     },
+    "ghcr.io/devcontainers/features/node:1": {},
     "ghcr.io/devcontainers/features/git:1": {}
   },
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
