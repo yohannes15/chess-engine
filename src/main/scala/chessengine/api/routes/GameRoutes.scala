@@ -11,7 +11,7 @@ import org.http4s.circe.CirceEntityEncoder.circeEntityEncoder
 import org.http4s.circe.CirceEntityDecoder.circeEntityDecoder
 import chessengine.api.dto.GameStateResponse
 import chessengine.logic.MoveGenerator.*
-import chessengine.api.dto.MoveRequest
+import chessengine.api.dto.{ErrorResponse, MoveRequest}
 import java.util.UUID
 import org.http4s.Response
 import chessengine.domain.{GameState, Move}
@@ -20,7 +20,7 @@ private[api] class GameRoutes(reg: GameRegistry):
 
   private def handleMove(id: UUID, mv: Move): IO[Response[IO]] =
     reg.applyMove(id, mv).flatMap {
-      case None       => NotFound("invalid game uuid")
+      case None       => NotFound(ErrorResponse("invalid game uuid"))
       case Some(next) => Ok(gameStateResponse(next))
     }
 
@@ -43,7 +43,7 @@ private[api] class GameRoutes(reg: GameRegistry):
         gameState <- reg.lookup(id)
         response <- gameState match
           case Some(gs) => Ok(gameStateResponse(gs))
-          case None     => NotFound("invalid game uuid")
+          case None     => NotFound(ErrorResponse("invalid game uuid"))
       yield response
 
     case req @ POST -> Root / "games" / UUIDVar(id) / "move" =>
@@ -51,10 +51,10 @@ private[api] class GameRoutes(reg: GameRegistry):
         mvReq <- req.as[MoveRequest]
         gameState <- reg.lookup(id)
         response <- gameState match
-          case None     => NotFound("invalid game uuid")
+          case None     => NotFound(ErrorResponse("invalid game uuid"))
           case Some(gs) =>
             allLegalMoves(gs).find(_.toUCI == mvReq.move.toLowerCase) match
-              case None     => BadRequest("illegal move")
+              case None     => BadRequest(ErrorResponse("illegal move"))
               case Some(mv) => handleMove(id, mv)
       yield response
   }

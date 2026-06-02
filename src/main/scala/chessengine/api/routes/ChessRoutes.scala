@@ -8,11 +8,9 @@ import org.http4s.circe.CirceEntityEncoder.circeEntityEncoder
 import chessengine.engine.Search
 import chessengine.domain.Fen
 import cats.implicits.*
-import io.circe.Json
-import io.circe.syntax.*
 import chessengine.api.dto.{
-  BestMoveRequest, BestMoveResponse, CheckMateResponse, StaleMateResponse,
-  ValidateMoveRequest, ValidateMoveResponse
+  BestMoveRequest, BestMoveResponse, CheckMateResponse, ErrorResponse,
+  StaleMateResponse, ValidateMoveRequest, ValidateMoveResponse
 }
 import chessengine.engine.SearchRes.*
 import chessengine.logic.MoveGenerator.allLegalMoves
@@ -25,12 +23,7 @@ private[api] class ChessRoutes(search: Search):
         request <- r.as[BestMoveRequest]
         response <- Fen.parse(request.fen).fold(
           errors =>
-            BadRequest(body =
-              Json.obj(
-                "message" -> Json.fromString("invalid fen string"),
-                "errors" -> Json.arr(errors.toList.asJson)
-              )
-            ),
+            BadRequest(ErrorResponse("invalid fen string", errors.toList)),
           state =>
             search.bestMove(state, request.depth) match
               case BestMove(mv, score) => Ok(BestMoveResponse(mv, score))
@@ -44,19 +37,10 @@ private[api] class ChessRoutes(search: Search):
         request <- r.as[ValidateMoveRequest]
         response <- Fen.parse(request.fen).fold(
           errors =>
-            BadRequest(body =
-              Json.obj(
-                "message" -> Json.fromString("invalid fen string"),
-                "errors" -> Json.arr(errors.toList.asJson)
-              )
-            ),
+            BadRequest(ErrorResponse("invalid fen string", errors.toList)),
           state =>
-            Ok(
-              ValidateMoveResponse(valid =
-                allLegalMoves(state).exists(_.toUCI ==
-                  request.move.toLowerCase)
-              )
-            )
+            Ok(ValidateMoveResponse(allLegalMoves(state).exists(_.toUCI ==
+              request.move.toLowerCase)))
         )
       yield (response)
   }
