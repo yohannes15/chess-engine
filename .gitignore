@@ -38,3 +38,4 @@ Thumbs.db
 .cursor/
 NOTES/
 .omo/
+.devcontainer/devcontainer-lock.json
