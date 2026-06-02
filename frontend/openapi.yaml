@@ -1,0 +1,266 @@
+openapi: "3.1.0"
+
+info:
+  title: Chess Engine API
+  version: "1.0.0"
+  description: |
+    Purely functional chess engine API.
+    Stateless routes for move validation and engine suggestions,
+    plus stateful game routes backed by GameRegistry.
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: health
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Healthy!
+
+  /best-move:
+    post:
+      summary: Get engine best move for a position
+      operationId: bestMove
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BestMoveRequest"
+      responses:
+        "200":
+          description: Engine result — one of best move, checkmate, or stalemate
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/BestMoveResponse"
+                  - $ref: "#/components/schemas/CheckMateResponse"
+                  - $ref: "#/components/schemas/StaleMateResponse"
+        "400":
+          description: Invalid FEN string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /validate-move:
+    post:
+      summary: Check whether a UCI move is legal in a given position
+      operationId: validateMove
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidateMoveRequest"
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidateMoveResponse"
+        "400":
+          description: Invalid FEN string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /games:
+    post:
+      summary: Create a new game
+      operationId: createGame
+      responses:
+        "200":
+          description: Game created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewGameResponse"
+
+  /games/{id}:
+    get:
+      summary: Get current game state
+      operationId: getGame
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Current game state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameStateResponse"
+        "404":
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /games/{id}/move:
+    post:
+      summary: Apply a UCI move to a game
+      operationId: applyMove
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MoveRequest"
+      responses:
+        "200":
+          description: Move applied — new game state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameStateResponse"
+        "400":
+          description: Illegal move
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+
+    BestMoveRequest:
+      type: object
+      required: [fen, depth]
+      properties:
+        fen:
+          type: string
+          example: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        depth:
+          type: integer
+          minimum: 1
+          example: 4
+
+    BestMoveResponse:
+      type: object
+      required: [move, score]
+      properties:
+        move:
+          type: string
+          description: UCI move string
+          example: "e2e4"
+        score:
+          type: integer
+          description: Centipawn score from the moving side's perspective
+          example: 30
+
+    CheckMateResponse:
+      type: object
+      required: [winner]
+      properties:
+        winner:
+          type: string
+          enum: [white, black]
+          example: white
+
+    StaleMateResponse:
+      type: object
+      description: Empty object — position is stalemate
+      example: {}
+
+    ValidateMoveRequest:
+      type: object
+      required: [fen, move]
+      properties:
+        fen:
+          type: string
+          example: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        move:
+          type: string
+          description: UCI move string
+          example: "e2e4"
+
+    ValidateMoveResponse:
+      type: object
+      required: [valid]
+      properties:
+        valid:
+          type: boolean
+          example: true
+
+    MoveRequest:
+      type: object
+      required: [move]
+      properties:
+        move:
+          type: string
+          description: UCI move string (lowercase, e.g. e2e4, e7e8q)
+          example: "e2e4"
+
+    NewGameResponse:
+      type: object
+      required: [uuid, fen]
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        fen:
+          type: string
+          example: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+    GameStateResponse:
+      type: object
+      required: [fen, turn, legal_moves]
+      properties:
+        fen:
+          type: string
+          example: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        turn:
+          type: string
+          enum: [white, black]
+          example: white
+        legal_moves:
+          type: array
+          items:
+            type: string
+          description: All legal UCI moves in the current position
+          example: ["e2e4", "d2d4", "g1f3"]
+
+    ErrorResponse:
+      type: object
+      required: [message, errors]
+      properties:
+        message:
+          type: string
+          example: "invalid fen string"
+        errors:
+          type: array
+          items:
+            type: string
+          example: ["Expected 8 Piece fields separated with '/'. got 7"]
