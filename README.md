@@ -24,10 +24,17 @@ Core engine is complete and tested:
 ## Quick start
 
 ```sh
-sbt compile          # compile all sources
-sbt test             # run all tests
-sbt ~reStart         # hot-reload the HTTP server on port 8080
-sbt assembly         # fat JAR
+# rebuild devcontainer once (if not done already)
+devcontainer up --workspace-folder . --remove-existing-container
+
+# backend (terminal 1)
+devcontainer exec --workspace-folder . sbt "~reStart"
+
+# frontend (terminal 2)
+devcontainer exec --workspace-folder . npm --prefix frontend run dev
+
+# enter workspace folder in neovim
+devcontainer exec --workspace-folder . nvim .
 ```
 
 ## Stack
