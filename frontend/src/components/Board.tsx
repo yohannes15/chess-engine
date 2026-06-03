@@ -13,6 +13,7 @@ interface BoardProps {
   onMove: (uci: string) => void
   orientation?: "white" | "black"
   lastMove?: LastMove | null
+  checkedKingSquare?: string | null
   disabled?: boolean
 }
 
@@ -39,12 +40,18 @@ const HIGHLIGHT_LAST_CAPTURE: React.CSSProperties = {
   boxShadow: "inset 0 0 0 4px rgba(224, 82, 82, 0.5)",
 }
 
+const HIGHLIGHT_CHECK: React.CSSProperties = {
+  background: "radial-gradient(circle, rgba(224,82,82,0.75) 0%, rgba(224,82,82,0.35) 55%, transparent 75%)",
+  boxShadow: "inset 0 0 0 4px rgba(224, 82, 82, 0.75)",
+}
+
 export function Board({
   fen,
   legalMoves,
   onMove,
   orientation = "white",
   lastMove,
+  checkedKingSquare,
   disabled = false,
 }: BoardProps) {
   const [selected, setSelected] = useState<string | null>(null)
@@ -67,6 +74,7 @@ export function Board({
       occupied.has(sq) ? HIGHLIGHT_CAPTURE_DESTINATION : HIGHLIGHT_DESTINATION,
     ])),
     ...(selected ? { [selected]: HIGHLIGHT_SELECTED } : {}),
+    ...(checkedKingSquare ? { [checkedKingSquare]: HIGHLIGHT_CHECK } : {}),
   }
 
   function tryMove(from: string, to: string): boolean {

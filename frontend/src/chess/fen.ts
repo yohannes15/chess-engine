@@ -23,6 +23,19 @@ export function pieceAt(fen: string, square: string): string | null {
   return null
 }
 
+export function findKingSquare(fen: string, color: "white" | "black"): string | null {
+  const king = color === "white" ? "K" : "k"
+
+  for (const file of FILES) {
+    for (let rank = 1; rank <= 8; rank += 1) {
+      const square = `${file}${rank}`
+      if (pieceAt(fen, square) === king) return square
+    }
+  }
+
+  return null
+}
+
 export function occupiedSquares(fen: string): Set<string> {
   const occupied = new Set<string>()
 

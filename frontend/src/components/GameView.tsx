@@ -1,5 +1,6 @@
 import { useState } from "react"
 import type { GameState } from "../api/client"
+import { findKingSquare } from "../chess/fen"
 import { Board } from "./Board"
 import type { LastMove } from "./Board"
 
@@ -27,6 +28,9 @@ export function GameView({
   onNewGame,
 }: GameViewProps) {
   const [orientation, setOrientation] = useState<"white" | "black">("white")
+  const checkedKingSquare = gameOver?.kind === "checkmate"
+    ? findKingSquare(game.fen, game.turn)
+    : null
   const status = gameOver
     ? gameOver.kind === "checkmate"
       ? `Checkmate. ${gameOver.winner === "white" ? "White" : "Black"} wins.`
@@ -53,6 +57,7 @@ export function GameView({
           onMove={onMove}
           orientation={orientation}
           lastMove={lastMove}
+          checkedKingSquare={checkedKingSquare}
           disabled={busy || Boolean(gameOver)}
         />
       </div>
