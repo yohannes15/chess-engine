@@ -10,7 +10,7 @@ The goal is to create a production-ready chess library similar to Lichess's scal
 
 ## Status
 
-Core engine is complete and tested:
+Core engine is complete and tested. A basic frontend player-vs-engine mode is also working:
 
 - **Domain model** — Piece, Board, Square, Move, GameState, FEN notation, castling rights
 - **Move generation** — pseudo-legal + legal moves, perft-validated across 4 positions (depths 1–4)
@@ -19,7 +19,8 @@ Core engine is complete and tested:
 - **HTTP API** — health check, best-move suggestion, move validation
 - **Multiplayer backend** — GameRegistry with game creation, state lookup, move application
 - **PGN parser** — tag parser, SAN resolver with disambiguation, SAN encoder
-- **Tests** — 254 tests across 8 suites, all passing
+- **Frontend MVP** — Vite + React dark UI, visual board, legal move highlighting, engine auto-reply
+- **Tests** — 259 tests across 9 suites, all passing
 
 ## Quick start
 
@@ -60,11 +61,18 @@ src/main/scala/chessengine/
 └── api/          Http4s server (port 8080), routes (health, best-move, validate-move,
                   game create/lookup/move), DTOs
 
+frontend/src/
+├── api/          typed fetch client generated from OpenAPI types
+├── chess/        UI-only FEN helpers
+├── components/   Board, Landing, GameView
+├── modes/        PlayerVsEngine
+└── types/        generated OpenAPI types
+
 src/test/scala/chessengine/
 ├── domain/       SquareSuite (139), FenSuite (23), BoardSuite (9), GameStateSuite (23)
 ├── logic/        MoveGeneratorSuite (14) — perft tests
 ├── engine/       SearchSuite (4), EvaluationSuite (6)
-└── api/          ChessRoutesSuite (8), GameRoutesSuite (2)
+└── api/          ChessRoutesSuite (8), GameRoutesSuite (7)
 ```
 
 ## Architecture notes
@@ -82,7 +90,8 @@ src/test/scala/chessengine/
 | Priority | What | Status |
 |---|---|---|
 | — | Multiplayer backend (GameRegistry, game routes, PGN parser, Fen.write) | Done |
-| 1 | Frontend (visual board, WebSockets via FS2, game clock) | Next |
+| — | Frontend player-vs-engine MVP (visual board, dark UI, engine replies) | Paused |
+| 1 | Multiplayer frontend + backend game status/clocks | Next |
 | 2 | Bitboard optimization | Later |
 
 ## License
