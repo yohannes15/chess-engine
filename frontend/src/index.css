@@ -139,6 +139,14 @@ button:disabled {
   max-width: 560px;
 }
 
+.game-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+}
+
 .turn-badge {
   display: flex;
   align-items: center;
@@ -150,6 +158,38 @@ button:disabled {
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--text);
+}
+
+.game-over-card {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  border-radius: 12px;
+  background: rgba(201, 162, 39, 0.08);
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.board-wrap {
+  width: 100%;
+}
+
+.game-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.secondary-button {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.secondary-button:hover:not(:disabled) {
+  background: #29292d;
 }
 
 .turn-dot {
