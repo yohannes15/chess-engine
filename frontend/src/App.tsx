@@ -1,7 +1,8 @@
 import { useState } from "react"
 import { api } from "./api/client"
 import type { GameState } from "./api/client"
-import { Board } from "./components/Board"
+import { Landing } from "./components/Landing"
+import { GameView } from "./components/GameView"
 
 function App() {
   const [gameId, setGameId] = useState<string | null>(null)
@@ -36,29 +37,23 @@ function App() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "2rem", gap: "1rem" }}>
-      <h1>Chess Engine</h1>
+    <div className="shell">
+      <header className="app-header">
+        <span className="app-title">Chess Engine</span>
+        <span className="app-subtitle">Negamax · Alpha-Beta · Scala 3</span>
+      </header>
 
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p className="error-banner">{error}</p>}
 
       {!game ? (
-        <button onClick={startGame} disabled={loading}>
-          {loading ? "Starting..." : "New Game"}
-        </button>
+        <Landing loading={loading} onStart={startGame} />
       ) : (
-        <>
-          <p>{game.turn === "white" ? "White to move" : "Black to move"}</p>
-          <div style={{ width: "min(90vw, 560px)" }}>
-            <Board
-              fen={game.fen}
-              legalMoves={game.legal_moves}
-              onMove={handleMove}
-            />
-          </div>
-          <button onClick={startGame} disabled={loading}>
-            New Game
-          </button>
-        </>
+        <GameView
+          game={game}
+          loading={loading}
+          onMove={handleMove}
+          onNewGame={startGame}
+        />
       )}
     </div>
   )
