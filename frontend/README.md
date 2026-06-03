@@ -17,7 +17,7 @@ npm run lint       # ESLint
 Types in `src/types/api.ts` are generated from `openapi.yaml`:
 
 ```sh
-npx openapi-typescript ./openapi.yaml -o src/types/api.ts
+npm run gen:types
 ```
 
 Re-run whenever the backend API changes.
