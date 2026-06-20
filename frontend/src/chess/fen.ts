@@ -2,7 +2,8 @@ const FILES = "abcdefgh"
 
 export function pieceAt(fen: string, square: string): string | null {
   const placement = fen.split(" ")[0]
-  const file = FILES.indexOf(square[0])
+  if (!placement) return null
+  const file = FILES.indexOf(square[0] ?? "")
   const rank = Number(square[1])
 
   if (file < 0 || rank < 1 || rank > 8) return null
