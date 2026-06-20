@@ -67,7 +67,7 @@ export function Board({
   const squareStyles: Record<string, React.CSSProperties> = {
     ...(lastMoveFrom ? { [lastMoveFrom]: HIGHLIGHT_LAST_MOVE } : {}),
     ...(lastMoveTo
-      ? { [lastMoveTo]: lastMove.wasCapture ? HIGHLIGHT_LAST_CAPTURE : HIGHLIGHT_LAST_MOVE }
+      ? { [lastMoveTo]: lastMove?.wasCapture ? HIGHLIGHT_LAST_CAPTURE : HIGHLIGHT_LAST_MOVE }
       : {}),
     ...Object.fromEntries(destinations.map(sq => [
       sq,
