@@ -4,8 +4,7 @@ WORKDIR /build
 
 # Install sbt 1.12.8
 RUN curl -fsSL https://github.com/sbt/sbt/releases/download/v1.12.8/sbt-1.12.8.tgz \
-    | tar xz -C /usr/local --strip-components=1 && \
-    ln -sf /usr/local/bin/sbt /usr/local/bin/sbt
+    | tar xz -C /usr/local --strip-components=1
 
 # Cache dependencies (replay only when project/* or build.sbt changes)
 COPY project/ project/
