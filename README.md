@@ -2,6 +2,8 @@
 
 A purely functional chess engine and HTTP API in Scala 3, Cats Effect, and Http4s.
 
+[Live Demo](https://chess-engine.fly.dev/)
+
 ## Portfolio
 
 A purely functional chess engine implementation in Scala 3 that demonstrates advanced functional programming concepts and concurrent system design. Implements perft-validated move generation, FEN notation parsing, alpha-beta search with transposition tables and Zobrist hashing, piece-square evaluation, and a stateless HTTP API. Built with Cats Effect for side-effect management and Http4s for the REST API layer.
