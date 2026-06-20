@@ -18,7 +18,7 @@ RUN sbt assembly
 # === Stage 2: Frontend (Vite build) ===
 FROM node:22-alpine AS frontend-builder
 WORKDIR /build
-COPY frontend/package.json frontend/package-lock.json ./
+COPY frontend/package.json frontend/package-lock.json frontend/.npmrc ./
 RUN npm ci
 COPY frontend/ ./
 RUN npm run build
