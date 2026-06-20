@@ -4,8 +4,7 @@ WORKDIR /build
 
 # Install sbt 1.12.8
 RUN curl -fsSL https://github.com/sbt/sbt/releases/download/v1.12.8/sbt-1.12.8.tgz \
-    | tar xz -C /usr/local --strip-components=1 && \
-    ln -sf /usr/local/bin/sbt /usr/local/bin/sbt
+    | tar xz -C /usr/local --strip-components=1
 
 # Cache dependencies (replay only when project/* or build.sbt changes)
 COPY project/ project/
@@ -19,7 +18,7 @@ RUN sbt assembly
 # === Stage 2: Frontend (Vite build) ===
 FROM node:22-alpine AS frontend-builder
 WORKDIR /build
-COPY frontend/package.json frontend/package-lock.json ./
+COPY frontend/package.json frontend/package-lock.json frontend/.npmrc ./
 RUN npm ci
 COPY frontend/ ./
 RUN npm run build
